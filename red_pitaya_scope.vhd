@@ -360,47 +360,39 @@ end process;
 
 	-- next state logic
 	adc_we_next <= '1' when (adc_arm_do_reg = '1') else
-								 '0' when (((adc_dly_do_reg = '1') or (adc_trig_reg = '1')) and (adc_dly_cnt = 0) and ((not adc_we_keep_reg = '1') or (adc_rst_do_reg = '1'))) else --delayed reached or reset
+								 '0' when (((adc_dly_do_reg = '1') or (adc_trig_reg = '1')) and (adc_dly_cnt_reg = 0) and ((not adc_we_keep_reg = '1') or (adc_rst_do_reg = '1'))) else --delayed reached or reset
 									adc_we_reg; --mantain value
 	
 	-- count how much data was written into the buffer before trigger
-	adc_we_cnt_next <= 	(others => '0') when ((adc_rst_do_reg = '1') or (adc_arm_do_reg = '1')) else
-											adc_we_cnt_reg + 1 when ((adc_we_reg = '1') and ( not adc_dly_do_reg = '1') and (adc_dv_reg = '1') and (nand adc_we_cnt_reg = '1') else 
-											adc_we_cnt_reg;
+	adc_we_cnt_next <= 	(others => '0') when ((adc_rst_do_reg = '1') or (adc_arm_do_reg = '1')) else 
+											adc_we_cnt_reg + 1 when ((adc_we_reg = '1') and ( not adc_dly_do_reg = '1') and (adc_dv_reg = '1') and (adc_we_cnt_reg /= (others => '1') else 
+											adc_we_cnt_reg; -- mantain value
 	
-	if (adc_rst_do)
-	   adc_wp <= {RSZ{1'b0}};
-	else if (adc_we && adc_dv)
-	   adc_wp <= adc_wp + 1;
-	
-	if (adc_rst_do)
-	   adc_wp_trig <= {RSZ{1'b0}};
-	else if (adc_trig && !adc_dly_do)
-	   adc_wp_trig <= adc_wp_cur ; // save write pointer at trigger arrival
-	
-	if (adc_rst_do)
-	   adc_wp_cur <= {RSZ{1'b0}};
-	else if (adc_we && adc_dv)
-	   adc_wp_cur <= adc_wp ; // save current write pointer
-	
-	
-	if (adc_trig)
-	   adc_dly_do  <= 1'b1 ;
-	else if ((adc_dly_do && (adc_dly_cnt == 32'b0)) || adc_rst_do || adc_arm_do) //delayed reached or reset
-	   adc_dly_do  <= 1'b0 ;
-	
-	if (adc_dly_do && adc_we && adc_dv)
-	   adc_dly_cnt <= adc_dly_cnt - 1;
-	else if (!adc_dly_do)
-	   adc_dly_cnt <= set_dly ;
+	adc_wp_next <= (others => '0') when (adc_rst_do_reg = '1') else
+								adc_wp_reg + 1 when ((adc_we_reg = '1') and (adc_dv_reg = '1')) else
+	   						adc_wp_reg; -- mantain value
 
-   end
-end process;
+	adc_wp_trig_next <= (others => '0') when (adc_rst_do_reg = '1') else
+									adc_wp_cur_reg when ((adc_trig_reg = '1') and  (not adc_dly_do_reg = '1')) else -- save write pointer at trigger arrival
+									adc_wp_trig_reg; -- mantain value 
+	
+	adc_wp_cur_next <= (others => '0') when (adc_rst_do_reg = '1') else
+											adc_wp_reg when ((adc_we_reg = '1') and (adc_dv_reg = '1')) else -- save current write pointer
+											adc_wp_cur_reg; -- mantain value	
+	
+	adc_dly_do_next  <= '1' when (adc_trig_reg = '1') else
+											'0' when (((adc_dly_do_reg = '1') and (adc_dly_cnt_reg = 0)) or (adc_rst_do_reg = '1') or (adc_arm_do_reg = '1')) else -- delayed reached or reset
+											adc_dly_do_reg;
+	
+	adc_dly_cnt_next <= adc_dly_cnt_reg - 1 when ((adc_dly_do_reg = '1') and (adc_we_reg = '1') and (adc_dv_reg = '1')) else
+											set_dly_reg when (not adc_dly_do_reg = '1') else
+											adc_dly_cnt_reg; -- mantain value
 
+--todo: check that part
 process(adc_clk_i)
 begin
 if (rising_edge(adc_clk_i)) then
-   if (adc_we && adc_dv) then
+   if ((adc_we_reg = '1') and (adc_dv_reg = '1')) then
       adc_a_buf[adc_wp] <= adc_a_dat ;
       adc_b_buf[adc_wp] <= adc_b_dat ;
    end
@@ -410,30 +402,37 @@ end process;
 process(adc_clk_i)
 begin
 if (rising_edge(adc_clk_i) then
-   if (adc_rstn_i == 1'b0)
-      adc_rval <= 4'h0 ;
-   else
-      adc_rval <= {adc_rval[2:0], (sys_ren || sys_wen)};
+	if (adc_rstn_i = '0')
+		adc_rval_reg <= (others => '0') ;
+	else
+		adc_rval_reg <= adc_rval_next;
 end process;
+	--next state logic
+	adc_rval_next <= {adc_rval[2:0], (sys_ren || sys_wen)};
 
-assign adc_rd_dv = adc_rval[3];
+	adc_rd_dv = adc_rval_reg(3);
 
-always @(posedge adc_clk_i) begin
-   adc_raddr   <= sys_addr[RSZ+1:2] ; -- address synchronous to clock
-   adc_a_raddr <= adc_raddr     ; -- double register 
-   adc_b_raddr <= adc_raddr     ; -- otherwise memory corruption at reading
-   adc_a_rd    <= adc_a_buf[adc_a_raddr] ;
-   adc_b_rd    <= adc_b_buf[adc_b_raddr] ;
+process(adc_clk_i)
+begin
+	if (rising_edge(adc_clk_i) then
+   adc_raddr_reg   <= adc_raddr_next;  
+   adc_a_raddr_reg <= adc_a_raddr_next;
+   adc_b_raddr_reg <= adc_b_raddr_next;
+   adc_a_rd_reg    <= adc_a_rd_next;
+   adc_b_rd_reg    <= adc_b_rd_next;
 end
-
-
-
+-- next state logic
+	adc_raddr_next   <= sys_addr(RSZ+1:2) ; -- address synchronous to clock
+  adc_a_raddr_next <= adc_raddr_reg    ; -- double register 
+  adc_b_raddr_next <= adc_raddr_reg     ; -- otherwise memory corruption at reading
+  adc_a_rd_next    <= adc_a_buf(to_integer(unsigned(adc_a_raddr_reg))) ;
+  adc_b_rd_next    <= adc_b_buf(to_integer(unsigned(adc_b_raddr_reg))) ;
 
 -----------------------------------------------------------------------------------
 --
 --  AXI CHA connection
 
-assign axi_a_clr = adc_rst_do ;
+axi_a_clr <= adc_rst_do_reg ;
 
 process(axi0_clk_o)
 begin
@@ -622,54 +621,80 @@ assign axi1_rstn_o = adc_rstn_i;
 -----------------------------------------------------------------------------------
 --  Trigger source selector
 
-always @(posedge adc_clk_i)
-if (adc_rstn_i == 1'b0) begin
-   adc_arm_do    <= 1'b0 ;
-   adc_rst_do    <= 1'b0 ;
-   adc_trig_sw   <= 1'b0 ;
-   set_trig_src  <= 4'h0 ;
-   adc_trig      <= 1'b0 ;
-end else begin
-   adc_arm_do  <= sys_wen && (sys_addr[19:0]==20'h0) && sys_wdata[0] ; // SW ARM
-   adc_rst_do  <= sys_wen && (sys_addr[19:0]==20'h0) && sys_wdata[1] ;
-   adc_trig_sw <= sys_wen && (sys_addr[19:0]==20'h4) && (sys_wdata[3:0]==4'h1); // SW trigger
+process(adc_clk_i, adc_rstn_i)
+begin
+	if (adc_rstn_i == '0') begin
+		adc_arm_do_reg    <= '0' ;
+		adc_rst_do_reg    <= '0' ;
+		adc_trig_sw_reg   <= '0' ;
+		set_trig_src_reg  <= (others => '0');
+		adc_trig_reg      <= '0' ;
+	end else begin
+		adc_arm_do_reg    <= 	adc_arm_do_next;
+		adc_rst_do_reg    <=	adc_rst_do_next;
+		adc_trig_sw_reg   <=  adc_trig_sw_next;  
+		set_trig_src_reg  <=  adc_trig_src_next;  
+		adc_trig_reg      <=  adc_trig_next;  
+	end if;
+end process;
 
-      if (sys_wen && (sys_addr[19:0]==20'h4))
-         set_trig_src <= sys_wdata[3:0] ;
-      else if (((adc_dly_do || adc_trig) && (adc_dly_cnt == 32'h0)) || adc_rst_do) //delayed reached or reset
-         set_trig_src <= 4'h0 ;
+	-- next state logic
+	adc_arm_do_next  <= '1' when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(0, sys_addr(19 downto 0)'length)) and (sys_wdata(0) = '1')) else -- SW ARM
+											'0';
+	
+	adc_rst_do_next  <= '1' when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(0, sys_addr(19 downto 0)'length)) and (sys_wdata(1) = '1')) else
+											'0';
+	adc_trig_sw_next <= '1' when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4", sys_addr(19 downto 0)'length)) and
+																(sys_wdata(3 downto 0) = std_logic_vector(to_unsigned(1, sys_wdata(3 downto 0)'length))))) else -- SW trigger
+											'0';
 
-   case (set_trig_src)
-       4'd1 : adc_trig <= adc_trig_sw   ; // manual
-       4'd2 : adc_trig <= adc_trig_ap   ; // A ch rising edge
-       4'd3 : adc_trig <= adc_trig_an   ; // A ch falling edge
-       4'd4 : adc_trig <= adc_trig_bp   ; // B ch rising edge
-       4'd5 : adc_trig <= adc_trig_bn   ; // B ch falling edge
-       4'd6 : adc_trig <= ext_trig_p    ; // external - rising edge
-       4'd7 : adc_trig <= ext_trig_n    ; // external - falling edge
-       4'd8 : adc_trig <= asg_trig_p    ; // ASG - rising edge
-       4'd9 : adc_trig <= asg_trig_n    ; // ASG - falling edge
-    default : adc_trig <= 1'b0          ;
-   endcase
-end
+	set_trig_src_next <= 	sys_wdata(3 downto 0)	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4", sys_addr(19 downto 0)'length)))) else 
+												(others => '0')      	when ((adc_dly_do_reg = '1') or (adc_trig_reg = '1') and (adc_dly_cnt_reg = to_unsigned(0, adc_dly_cnt_reg'length)) or 
+																										(adc_rst_do_reg = '1')) else --delayed reached or reset
+         								set_trig_src_reg ;
+
+	with (set_trig_src_reg) select
+		adc_trig_next <= 	adc_trig_sw_reg when std_logic_vector(to_unsigned(1, set_trig_src_reg'length), -- manual
+											adc_trig_ap_reg	when std_logic_vector(to_unsigned(2, set_trig_src_reg'length), -- A ch rising edge
+											adc_trig_an_reg	when std_logic_vector(to_unsigned(3, set_trig_src_reg'length), -- A ch falling edge
+											adc_trig_bp_reg	when std_logic_vector(to_unsigned(4, set_trig_src_reg'length), -- B ch rising edge
+											adc_trig_bn_reg	when std_logic_vector(to_unsigned(5, set_trig_src_reg'length), -- B ch falling edge
+											ext_trig_p 			when std_logic_vector(to_unsigned(6, set_trig_src_reg'length),  -- external - rising edge
+											ext_trig_n  		when std_logic_vector(to_unsigned(7, set_trig_src_reg'length), -- external - falling edge
+											asg_trig_p  		when std_logic_vector(to_unsigned(8, set_trig_src_reg'length), -- ASG - rising edge
+											asg_trig_n  		when std_logic_vector(to_unsigned(9, set_trig_src_reg'length), -- ASG - falling edge
+											'0'	        		when others;
 
 -----------------------------------------------------------------------------------
 --  Trigger created from input signal
 
-always @(posedge adc_clk_i)
-if (adc_rstn_i == 1'b0) begin
-   adc_scht_ap  <=  2'h0 ;
-   adc_scht_an  <=  2'h0 ;
-   adc_scht_bp  <=  2'h0 ;
-   adc_scht_bn  <=  2'h0 ;
-   adc_trig_ap  <=  1'b0 ;
-   adc_trig_an  <=  1'b0 ;
-   adc_trig_bp  <=  1'b0 ;
-   adc_trig_bn  <=  1'b0 ;
-end else begin
-   set_a_treshp <= set_a_tresh + set_a_hyst ; // calculate positive
-   set_a_treshm <= set_a_tresh - set_a_hyst ; // and negative treshold
-   set_b_treshp <= set_b_tresh + set_b_hyst ;
+process(adc_clk_i, adc_rstn_i)
+begin
+if (adc_rstn_i = '0') then
+   adc_scht_ap_reg  <=  (others => '0') ;
+   adc_scht_an_reg  <=  (others => '0') ;
+   adc_scht_bp_reg  <=  (others => '0') ;
+   adc_scht_bn_reg  <=  (others => '0') ;
+   adc_trig_ap_reg  <=  '0' ;
+   adc_trig_an_reg  <=  '0' ;
+   adc_trig_bp_reg  <=  '0' ;
+   adc_trig_bn_reg  <=  '0' ;
+elsif (rising_edge(adc_clk_i) then
+	adc_scht_ap_reg  <= adc_scht_ap_next; 
+	adc_scht_an_reg  <= adc_scht_an_next; 
+	adc_scht_bp_reg  <= adc_scht_bp_next; 
+	adc_scht_bn_reg  <= adc_scht_bn_next; 
+	adc_trig_ap_reg  <= adc_trig_ap_next; 
+	adc_trig_an_reg  <= adc_trig_an_next; 
+	adc_trig_bp_reg  <= adc_trig_bp_next; 
+	adc_trig_bn_reg  <= adc_trig_bn_next; 
+end if;
+end process;
+
+	--next state logic
+	set_a_treshp <= unsigned(set_a_tresh_reg) + set_a_hyst ; -- calculate positive
+   set_a_treshm <= set_a_tresh - set_a_hyst ; -- and negative treshold
+   set_b_treshp <= unsigned(set_b_tresh_reg) + unsigned(set_b_hyst) ;
    set_b_treshm <= set_b_tresh - set_b_hyst ;
 
    if (adc_dv) begin
@@ -698,22 +723,37 @@ end
 -----------------------------------------------------------------------------------
 --  External trigger
 
-always @(posedge adc_clk_i)
-if (adc_rstn_i == 1'b0) begin
-   ext_trig_in   <=  3'h0 ;
-   ext_trig_dp   <=  2'h0 ;
-   ext_trig_dn   <=  2'h0 ;
-   ext_trig_debp <= 20'h0 ;
-   ext_trig_debn <= 20'h0 ;
-   asg_trig_in   <=  3'h0 ;
-   asg_trig_dp   <=  2'h0 ;
-   asg_trig_dn   <=  2'h0 ;
-   asg_trig_debp <= 20'h0 ;
-   asg_trig_debn <= 20'h0 ;
-end else begin
+process(adc_clk_i, adc_rstn_i)
+begin
+if (adc_rstn_i = '0') then
+   ext_trig_in_reg   <= (others => '0');
+   ext_trig_dp_reg   <= (others => '0') ;
+   ext_trig_dn_reg   <= (others => '0') ;
+   ext_trig_debp_reg <= (others => '0') ;
+   ext_trig_debn_reg <= (others => '0') ;
+   asg_trig_in_reg   <= (others => '0') ;
+   asg_trig_dp_reg   <= (others => '0') ;
+   asg_trig_dn_reg   <= (others => '0') ;
+   asg_trig_debp_reg <= (others => '0') ;
+   asg_trig_debn_reg <= (others => '0');
+elsif (rising_edge(adc_clk_i) then
+   ext_trig_in_reg   <= ext_trig_in_next;
+   ext_trig_dp_reg   <= ext_trig_dp_next; 
+   ext_trig_dn_reg   <= ext_trig_dn_next; 
+   ext_trig_debp_reg <= ext_trig_debp_next; 
+   ext_trig_debn_reg <= ext_trig_debn_next; 
+   asg_trig_in_reg   <= asg_trig_in_next; 
+   asg_trig_dp_reg   <= asg_trig_dp_next; 
+   asg_trig_dn_reg   <= asg_trig_dn_next; 
+   asg_trig_debp_reg <= asg_trig_debp_next; 
+   asg_trig_debn_reg <= asg_trig_debn_next; 
+end if;
+end process;
+
+	-- next state logic
    ------------- External trigger
    -- synchronize FFs
-   ext_trig_in <= {ext_trig_in[1:0],trig_ext_i} ;
+   ext_trig_in_next <= ext_trig_in_reg(1 downto 0) & trig_ext_i ;
 
    -- look for input changes
    if ((ext_trig_debp == 20'h0) && (ext_trig_in[1] && !ext_trig_in[2]))
@@ -760,16 +800,16 @@ end else begin
       asg_trig_dn[0] <= asg_trig_in[1] ;
 end
 
-assign ext_trig_p = (ext_trig_dp == 2'b01) ;
-assign ext_trig_n = (ext_trig_dn == 2'b10) ;
-assign asg_trig_p = (asg_trig_dp == 2'b01) ;
-assign asg_trig_n = (asg_trig_dn == 2'b10) ;
+	ext_trig_p = (ext_trig_dp == 2'b01) ;
+	ext_trig_n = (ext_trig_dn == 2'b10) ;
+	asg_trig_p = (asg_trig_dp == 2'b01) ;
+	asg_trig_n = (asg_trig_dn == 2'b10) ;
 
 -----------------------------------------------------------------------------------
 --  System bus connection
 process(adc_clk_i, adc_rstn_i)
 begin
-if (adc_rstn_i == '0') then
+if (adc_rstn_i = '0') then
    adc_we_keep_reg   <=	'0'      ;
    set_a_tresh_reg   <=	std_logic_vector(to_unsigned(5000,set_a_tresh_reg'length))  ;
    set_b_tresh_reg   <= std_logic_vector(to_unsigned(5000,set_b_tresh_reg'length));--todo: verificar esta asignacion -14'd5000   ;
@@ -814,36 +854,36 @@ end process;
 
 
    if (sys_wen) then
-      if (sys_addr[19:0]==20'h00)   adc_we_keep   <= sys_wdata[     3] ;
+      if (sys_addr(19:0)=20'h00)   adc_we_keep   <= sys_wdata[     3] ;
 
-      if (sys_addr[19:0]==20'h08)   set_a_tresh   <= sys_wdata[14-1:0] ;
-      if (sys_addr[19:0]==20'h0C)   set_b_tresh   <= sys_wdata[14-1:0] ;
-      if (sys_addr[19:0]==20'h10)   set_dly       <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h14)   set_dec       <= sys_wdata[17-1:0] ;
-      if (sys_addr[19:0]==20'h20)   set_a_hyst    <= sys_wdata[14-1:0] ;
-      if (sys_addr[19:0]==20'h24)   set_b_hyst    <= sys_wdata[14-1:0] ;
-      if (sys_addr[19:0]==20'h28)   set_avg_en    <= sys_wdata[     0] ;
+      if (sys_addr(19:0)=20'h08)   set_a_tresh_next   <= sys_wdata(14-1 downto 0) ;
+      if (sys_addr(19:0)=20'h0C)   set_b_tresh_next   <= sys_wdata(14-1 downto 0) ;
+      if (sys_addr(19:0)=20'h10)   set_dly       <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h14)   set_dec       <= sys_wdata(17-1 downto 0) ;
+      if (sys_addr(19:0)=20'h20)   set_a_hyst_next    <= sys_wdata(14-1 downto 0) ;
+      if (sys_addr(19:0)=20'h24)   set_b_hyst_next    <= sys_wdata(14-1 downto 0) ;
+      if (sys_addr(19:0)=20'h28)   set_avg_en    <= sys_wdata(     downto 0) ;
 
-      if (sys_addr[19:0]==20'h30)   set_a_filt_aa <= sys_wdata[18-1:0] ;
-      if (sys_addr[19:0]==20'h34)   set_a_filt_bb <= sys_wdata[25-1:0] ;
-      if (sys_addr[19:0]==20'h38)   set_a_filt_kk <= sys_wdata[25-1:0] ;
-      if (sys_addr[19:0]==20'h3C)   set_a_filt_pp <= sys_wdata[25-1:0] ;
-      if (sys_addr[19:0]==20'h40)   set_b_filt_aa <= sys_wdata[18-1:0] ;
-      if (sys_addr[19:0]==20'h44)   set_b_filt_bb <= sys_wdata[25-1:0] ;
-      if (sys_addr[19:0]==20'h48)   set_b_filt_kk <= sys_wdata[25-1:0] ;
-      if (sys_addr[19:0]==20'h4C)   set_b_filt_pp <= sys_wdata[25-1:0] ;
+      if (sys_addr(19:0)=20'h30)   set_a_filt_aa <= sys_wdata(18-1 downto 0) ;
+      if (sys_addr(19:0)=20'h34)   set_a_filt_bb <= sys_wdata(25-1 downto 0) ;
+      if (sys_addr(19:0)=20'h38)   set_a_filt_kk <= sys_wdata(25-1 downto 0) ;
+      if (sys_addr(19:0)=20'h3C)   set_a_filt_pp <= sys_wdata(25-1 downto 0) ;
+      if (sys_addr(19:0)=20'h40)   set_b_filt_aa <= sys_wdata(18-1 downto 0) ;
+      if (sys_addr(19:0)=20'h44)   set_b_filt_bb <= sys_wdata(25-1 downto 0) ;
+      if (sys_addr(19:0)=20'h48)   set_b_filt_kk <= sys_wdata(25-1 downto 0) ;
+      if (sys_addr(19:0)=20'h4C)   set_b_filt_pp <= sys_wdata(25-1 downto 0) ;
 
-      if (sys_addr[19:0]==20'h50)   set_a_axi_start <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h54)   set_a_axi_stop  <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h58)   set_a_axi_dly   <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h5C)   set_a_axi_en    <= sys_wdata[     0] ;
+      if (sys_addr(19:0)=20'h50)   set_a_axi_start <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h54)   set_a_axi_stop  <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h58)   set_a_axi_dly   <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h5C)   set_a_axi_en    <= sys_wdata(     0) ;
 
-      if (sys_addr[19:0]==20'h70)   set_b_axi_start <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h74)   set_b_axi_stop  <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h78)   set_b_axi_dly   <= sys_wdata[32-1:0] ;
-      if (sys_addr[19:0]==20'h7C)   set_b_axi_en    <= sys_wdata[     0] ;
+      if (sys_addr(19:0)=20'h70)   set_b_axi_start <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h74)   set_b_axi_stop  <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h78)   set_b_axi_dly   <= sys_wdata(32-1 downto 0) ;
+      if (sys_addr(19:0)=20'h7C)   set_b_axi_en    <= sys_wdata(     0) ;
 
-      if (sys_addr[19:0]==20'h90)   set_deb_len <= sys_wdata[20-1:0] ;
+      if (sys_addr(19:0)=20'h90)   set_deb_len <= sys_wdata(20-1 downto 0) ;
    end
 end
 
@@ -865,16 +905,16 @@ end else begin
 
      20'h00004 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 4{1'b0}}, set_trig_src}       ; end 
 
-     20'h00008 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_tresh}        ; end
-     20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh}        ; end
+     20'h00008 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_tresh_reg}        ; end
+     20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh_reg}        ; end
      20'h00010 : begin sys_ack <= sys_en;          sys_rdata <= {               set_dly}            ; end
      20'h00014 : begin sys_ack <= sys_en;          sys_rdata <= {{32-17{1'b0}}, set_dec}            ; end
 
      20'h00018 : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_cur}        ; end
      20'h0001C : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_trig}       ; end
 
-     20'h00020 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_hyst}         ; end
-     20'h00024 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_hyst}         ; end
+     20'h00020 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_hyst_reg}         ; end
+     20'h00024 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_hyst_reg}         ; end
 
      20'h00028 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_avg_en}         ; end
 
