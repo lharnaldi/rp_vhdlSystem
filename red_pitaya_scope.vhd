@@ -173,12 +173,12 @@ signal set_a_axi_trig_reg,  set_a_axi_trig_next  	:	std_logic_vector(32-1 downto
 signal set_a_axi_cur_reg,   set_a_axi_cur_next 		:	std_logic_vector(32-1 downto 0)  ;
 signal axi_a_we_reg,        axi_a_we_next    			:	std_logic ;
 signal axi_a_dat_reg,       axi_a_dat_next  			:	std_logic_vector(64-1 downto 0)  ;
-signal axi_a_dat_sel_reg,   axi_a_dat_sel_next  	:	std_logic_vector(2-1 downto 0) ;
+signal axi_a_dat_sel_reg,   axi_a_dat_sel_next  	:	unsigned(2-1 downto 0) ;
 signal axi_a_dat_dv_reg,    axi_a_dat_dv_next  		:	std_logic_vector(1-1 downto 0) ;
-signal axi_a_dly_cnt_reg    axi_a_dly_cnt_next 		:	std_logic_vector(32-1 downto 0) ;
+signal axi_a_dly_cnt_reg    axi_a_dly_cnt_next 		:	unsigned(32-1 downto 0) ;
 signal axi_a_dly_do_reg, 		axi_a_dly_do_next 		: std_logic       ;
 signal axi_a_clr																	:	std_logic          ;
-signal axi_a_cur_addr 														: std_logic     ;
+signal axi_a_cur_addr 														: std_logic_vector(32-1 downto 0)     ;
 
 -----------------------------------------------------------------------------------
 --
@@ -202,47 +202,48 @@ signal axi_b_cur_addr 														: std_logic     ;
 -----------------------------------------------------------------------------------
 --  Trigger source selector
 
-signal adc_trig_ap_reg, adc_trig_ap_next  			:	std_logic  ;
-signal adc_trig_an_reg,  adc_trig_an_next 			:	std_logic   ;
-signal adc_trig_bp_reg,  adc_trig_bp_next 			:	std_logic   ;
-signal adc_trig_bn_reg,  adc_trig_bn_next 			:	std_logic   ;
-signal adc_trig_sw_reg,  adc_trig_sw_next 			:	std_logic   ;
-signal set_trig_src_reg, set_trig_src_next			:	std_logic_vector(4-1 downto 0)    ;
-signal ext_trig_p   														:	std_logic     ;
-signal ext_trig_n   														:	std_logic     ;
-signal asg_trig_p   														:	std_logic     ;
-signal asg_trig_n   														:	std_logic     ;
+signal adc_trig_ap_reg, adc_trig_ap_next  			:	std_logic  											;
+signal adc_trig_an_reg,  adc_trig_an_next 			:	std_logic   										;
+signal adc_trig_bp_reg,  adc_trig_bp_next 			:	std_logic   										;
+signal adc_trig_bn_reg,  adc_trig_bn_next 			:	std_logic   										;
+signal adc_trig_sw_reg,  adc_trig_sw_next 			:	std_logic   										;
+signal set_trig_src_reg, set_trig_src_next			:	std_logic_vector(4-1 downto 0)  ;
+signal ext_trig_p   														:	std_logic     									;
+signal ext_trig_n   														:	std_logic     									;
+signal asg_trig_p   														:	std_logic     									;
+signal asg_trig_n   														:	std_logic     									;
 
 -----------------------------------------------------------------------------------
 --  Trigger created from input signal
 
-signal adc_scht_ap_reg,  adc_scht_ap_next 			:	std_logic_vector(2-1 downto 0);
-signal adc_scht_an_reg,  adc_scht_an_next 			:	std_logic_vector(2-1 downto 0);
-signal adc_scht_bp_reg,  adc_scht_bp_next 			:	std_logic_vector(2-1 downto 0);
-signal adc_scht_bn_reg,  adc_scht_bn_next 			:	std_logic_vector(2-1 downto 0);
-signal set_a_tresh_reg,  set_a_tresh_next 			:	std_logic_vector(14-1 downto 0);
-signal set_a_treshp_reg, set_a_treshp_next			:	std_logic_vector(14-1 downto 0);
-signal set_a_treshm_reg, set_a_treshm_next			:	std_logic_vector(14-1 downto 0);
-signal set_b_tresh_reg,  set_b_tresh_next 			:	std_logic_vector(14-1 downto 0);
-signal set_b_treshp_reg, set_b_treshp_next			:	std_logic_vector(14-1 downto 0);
-signal set_b_treshm_reg, set_b_treshm_next			:	std_logic_vector(14-1 downto 0);
-signal set_a_hyst_reg,   set_a_hyst_next  			:	std_logic_vector(14-1 downto 0);
-signal set_b_hyst_reg,   set_b_hyst_next  			:	std_logic_vector(14-1 downto 0);
+signal adc_scht_ap_reg,  adc_scht_ap_next 			:	std_logic_vector(2-1 downto 0)	;
+signal adc_scht_an_reg,  adc_scht_an_next 			:	std_logic_vector(2-1 downto 0)	;
+signal adc_scht_bp_reg,  adc_scht_bp_next 			:	std_logic_vector(2-1 downto 0)	;
+signal adc_scht_bn_reg,  adc_scht_bn_next 			:	std_logic_vector(2-1 downto 0)	;
+signal set_a_tresh_reg,  set_a_tresh_next 			:	std_logic_vector(14-1 downto 0)	;
+signal set_a_treshp_reg, set_a_treshp_next			:	std_logic_vector(14-1 downto 0)	;
+signal set_a_treshm_reg, set_a_treshm_next			:	std_logic_vector(14-1 downto 0)	;
+signal set_b_tresh_reg,  set_b_tresh_next 			:	std_logic_vector(14-1 downto 0)	;
+signal set_b_treshp_reg, set_b_treshp_next			:	std_logic_vector(14-1 downto 0)	;
+signal set_b_treshm_reg, set_b_treshm_next			:	std_logic_vector(14-1 downto 0)	;
+signal set_a_hyst_reg,   set_a_hyst_next  			:	std_logic_vector(14-1 downto 0)	;
+signal set_b_hyst_reg,   set_b_hyst_next  			:	std_logic_vector(14-1 downto 0)	;
 
 -----------------------------------------------------------------------------------
 --  External trigger
 
-signal ext_trig_in_reg,  ext_trig_in_next   		:	std_logic_vector(3-1 downto 0) ;
-signal ext_trig_dp_reg,  ext_trig_dp_next   		:	std_logic_vector(2-1 downto 0) ;
-signal ext_trig_dn_reg,  ext_trig_dn_next   		:	std_logic_vector(2-1 downto 0) ;
-signal ext_trig_debp_reg, ext_trig_debp_next		:	std_logic_vector(20-1 downto 0) ;
-signal ext_trig_debn_reg, ext_trig_debn_next		:	std_logic_vector(20-1 downto 0) ;
-signal asg_trig_in_reg,  asg_trig_in_next   		:	std_logic_vector(3-1 downto 0) ;
-signal asg_trig_dp_reg,  asg_trig_dp_next   		:	std_logic_vector(2-1 downto 0) ;
-signal asg_trig_dn_reg,  asg_trig_dn_next   		:	std_logic_vector(2-1 downto 0) ;
-signal asg_trig_debp_reg, asg_trig_debp_next		:	std_logic_vector(20-1 downto 0) ;
-signal asg_trig_debn_reg, asg_trig_debn_next		:	std_logic_vector(20-1 downto 0) ;
+signal ext_trig_in_reg,  ext_trig_in_next   		:	std_logic_vector(3-1 downto 0	) 	;
+signal ext_trig_dp_reg,  ext_trig_dp_next   		:	std_logic_vector(2-1 downto 0	) 	;
+signal ext_trig_dn_reg,  ext_trig_dn_next   		:	std_logic_vector(2-1 downto 0	) 	;
+signal ext_trig_debp_reg, ext_trig_debp_next		:	std_logic_vector(20-1 downto 0)	;
+signal ext_trig_debn_reg, ext_trig_debn_next		:	std_logic_vector(20-1 downto 0)	;
+signal asg_trig_in_reg,  asg_trig_in_next   		:	std_logic_vector(3-1 downto 0	) 	;
+signal asg_trig_dp_reg,  asg_trig_dp_next   		:	std_logic_vector(2-1 downto 0	) 	;
+signal asg_trig_dn_reg,  asg_trig_dn_next   		:	std_logic_vector(2-1 downto 0	) 	;
+signal asg_trig_debp_reg, asg_trig_debp_next		:	std_logic_vector(20-1 downto 0)	;
+signal asg_trig_debn_reg, asg_trig_debn_next		:	std_logic_vector(20-1 downto 0)	;
                                                            
+signal sys_en																		: std_logic												;
 begin                                                     
 
 -----------------------------------------------------------------------------------
@@ -282,7 +283,7 @@ port map(
 --  Decimate input data
 process(adc_clk_i, adc_rstn_i)
 begin
-if (adc_rstn_i == '0') then
+if (adc_rstn_i = '0') then
 	adc_a_sum_reg   <= (others => '0');
 	adc_b_sum_reg   <= (others => '0');
 	adc_dec_cnt_reg <= (others => '0') ;
@@ -393,13 +394,13 @@ process(adc_clk_i)
 begin
 if (rising_edge(adc_clk_i)) then
    if ((adc_we_reg = '1') and (adc_dv_reg = '1')) then
-      adc_a_buf[adc_wp] <= adc_a_dat ;
-      adc_b_buf[adc_wp] <= adc_b_dat ;
+      adc_a_buf(to_integer(unsigned(adc_wp_reg))) <= adc_a_dat ;
+      adc_b_buf(to_integer(unsigned(adc_wp_reg))) <= adc_b_dat ;
    end
 end process;
 
 -- Read
-process(adc_clk_i)
+process(adc_clk_i, adc_rstn_i)
 begin
 if (rising_edge(adc_clk_i) then
 	if (adc_rstn_i = '0')
@@ -408,7 +409,7 @@ if (rising_edge(adc_clk_i) then
 		adc_rval_reg <= adc_rval_next;
 end process;
 	--next state logic
-	adc_rval_next <= {adc_rval[2:0], (sys_ren || sys_wen)};
+	adc_rval_next <= adc_rval_reg(2 downto 0) & (sys_ren or sys_wen);
 
 	adc_rd_dv = adc_rval_reg(3);
 
@@ -422,11 +423,11 @@ begin
    adc_b_rd_reg    <= adc_b_rd_next;
 end
 -- next state logic
-	adc_raddr_next   <= sys_addr(RSZ+1:2) ; -- address synchronous to clock
-  adc_a_raddr_next <= adc_raddr_reg    ; -- double register 
-  adc_b_raddr_next <= adc_raddr_reg     ; -- otherwise memory corruption at reading
-  adc_a_rd_next    <= adc_a_buf(to_integer(unsigned(adc_a_raddr_reg))) ;
-  adc_b_rd_next    <= adc_b_buf(to_integer(unsigned(adc_b_raddr_reg))) ;
+	adc_raddr_next   <= sys_addr(RSZ+1 downto 2) 													; -- address synchronous to clock
+  adc_a_raddr_next <= adc_raddr_reg    																	; -- double register 
+  adc_b_raddr_next <= adc_raddr_reg    																	; -- otherwise memory corruption at reading
+  adc_a_rd_next    <= adc_a_buf(to_integer(unsigned(adc_a_raddr_reg))) 	;
+  adc_b_rd_next    <= adc_b_buf(to_integer(unsigned(adc_b_raddr_reg))) 	;
 
 -----------------------------------------------------------------------------------
 --
@@ -434,58 +435,68 @@ end
 
 axi_a_clr <= adc_rst_do_reg ;
 
-process(axi0_clk_o)
+process(axi0_clk_o, axi0_clk_o)
 begin
-always @(posedge axi0_clk_o) begin
-   if (axi0_rstn_o == 1'b0) begin
-      axi_a_we      <=  1'b0 ;
-      axi_a_dat     <= 64'h0 ;
-      axi_a_dat_sel <=  2'h0 ;
-      axi_a_dat_dv  <=  1'b0 ;
-      axi_a_dly_cnt <= 32'h0 ;
-      axi_a_dly_do  <=  1'b0 ;
-   end
-   else begin
-      if (adc_arm_do && set_a_axi_en)
-         axi_a_we <= 1'b1 ;
-      else if (((axi_a_dly_do || adc_trig) && (axi_a_dly_cnt == 32'h0)) || adc_rst_do) //delayed reached or reset
-         axi_a_we <= 1'b0 ;
+ if (axi0_rstn_o = '0') then
+    axi_a_we_reg      <= '0' ;
+    axi_a_dat_reg     <= (others => '0');
+    axi_a_dat_sel_reg <=  (others => '0');
+    axi_a_dat_dv_reg  <= '0' ;
+    axi_a_dly_cnt_reg <= (others => '0') ;
+    axi_a_dly_do_reg  <= '0' ;
+		set_a_axi_cur_reg <= (other => '0');
+ elsif (rising_edge(axi0_clk_o) then
+		axi_a_we_reg      <= axi_a_we_next;      
+		axi_a_dat_reg     <= axi_a_dat_next;     
+		axi_a_dat_sel_reg <= axi_a_dat_sel_next; 
+		axi_a_dat_dv_reg  <= axi_a_dat_dv_next;  
+		axi_a_dly_cnt_reg <= axi_a_dly_cnt_next; 
+		axi_a_dly_do_reg  <= axi_a_dly_do_next;  
+		set_a_axi_cur_reg <= set_a_axi_cur_next;
+	end if;
+end process;
 
-      if (adc_trig && axi_a_we)
-         axi_a_dly_do  <= 1'b1 ;
-      else if ((axi_a_dly_do && (axi_a_dly_cnt == 32'b0)) || axi_a_clr || adc_arm_do) //delayed reached or reset
-         axi_a_dly_do  <= 1'b0 ;
+	--next state logic
+	axi_a_we_next <= 	'1' when ((adc_arm_do_reg = '1') and (set_a_axi_en_reg = '1')) else
+  									'0' when ((axi_a_dly_do_reg = '1') or (adc_trig_reg = '1') and 
+															(axi_a_dly_cnt_reg = to_unsigned(0, axi_a_dly_cnt_reg'length)) or
+															(adc_rst_do_reg = '1')) else --delayed reached or reset
+         						axi_a_we_reg; -- mantain value
 
-      if (axi_a_dly_do && axi_a_we && adc_dv)
-         axi_a_dly_cnt <= axi_a_dly_cnt - 1;
-      else if (!axi_a_dly_do)
-         axi_a_dly_cnt <= set_a_axi_dly ;
+	axi_a_dly_do_next  <= '1' when ((adc_trig_reg = '1') and (axi_a_we_reg = '1')) else
+      									'0' when ((axi_a_dly_do_reg = '1') and 
+																	(axi_a_dly_cnt_reg = to_unsigned(0, axi_a_dly_cnt_reg'length)) or 
+																	(axi_a_clr or adc_arm_do_reg) else --delayed reached or reset
+												axi_a_dly_do_reg;
 
-      if (axi_a_clr)
-         axi_a_dat_sel <= 2'h0 ;
-      else if (axi_a_we && adc_dv)
-         axi_a_dat_sel <= axi_a_dat_sel + 2'h1 ;
+	axi_a_dly_cnt_next <= axi_a_dly_cnt_reg - 1 when ((axi_a_dly_do_reg = '1') and ((axi_a_we_reg = '1') and (adc_dv_reg = '1'))) else
+         								set_a_axi_dly_reg			when (not axi_a_dly_do = '1') else
+												axi_a_dly_cnt_reg; -- mantain value
 
-      axi_a_dat_dv <= axi_a_we && (axi_a_dat_sel == 2'b11) && adc_dv ;
-   end
+	axi_a_dat_sel_next <= (others => '0') 			when (axi_a_clr = '1') else
+         								axi_a_dat_sel_reg + 1 when ((axi_a_we_reg = '1') and (adc_dv_reg = '1')) else
+												axi_a_dat_sel_reg; -- mantain value
 
-   if (axi_a_we && adc_dv) begin
-      if (axi_a_dat_sel == 2'b00) axi_a_dat[ 16-1:  0] <= $signed(adc_a_dat);
-      if (axi_a_dat_sel == 2'b01) axi_a_dat[ 32-1: 16] <= $signed(adc_a_dat);
-      if (axi_a_dat_sel == 2'b10) axi_a_dat[ 48-1: 32] <= $signed(adc_a_dat);
-      if (axi_a_dat_sel == 2'b11) axi_a_dat[ 64-1: 48] <= $signed(adc_a_dat);
-   end
+	axi_a_dat_dv_next <= 	'1' when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = to_unsigned(3, axi_a_dat_sel_reg'length)) and (adc_dv_reg = '1')) else 
+   											'0';
 
-   if (axi_a_clr)
-      set_a_axi_trig <= {RSZ{1'b0}};
-   else if (adc_trig && !axi_a_dly_do && axi_a_we)
-      set_a_axi_trig <= {axi_a_cur_addr[32-1:3],axi_a_dat_sel,1'b0} ; -- save write pointer at trigger arrival
+	axi_a_dat_next(16-1 downto 0) <= 	signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else
+																		axi_a_dat_reg(16-1 downto 0); --mantain value	
+	axi_a_dat_next(32-1 downto 16) <= signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "01")) else
+																		axi_a_dat_reg(32-1 downto 16); --mantain value	
+	axi_a_dat_next(48-1 downto 32) <= signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "10")) else
+																		axi_a_dat_reg(48-1 downto 32); --mantain value	
+	axi_a_dat_next(64-1 downto 48) <= signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "11")) else
+																		axi_a_dat_reg(64-1 downto 48); --mantain value	
 
-   if (axi_a_clr)
-      set_a_axi_cur <= set_a_axi_start ;
-   else if (axi0_wvalid_o)
-      set_a_axi_cur <= axi_a_cur_addr ;
-end
+	set_a_axi_trig_next <= 	(others => '0') 																			when (axi_a_clr = '1') else
+      										(axi_a_cur_addr(32-1 downto 3) & axi_a_dat_sel & '0') when ((adc_trig_reg = '1') and 
+																																											(not axi_a_dly_do = '1') and (axi_a_we_reg = '1')) else -- save write pointer at trigger arrival
+													set_a_axi_trig_reg; --mantain value
+
+	set_a_axi_cur_next <= set_a_axi_start when (axi_a_clr = '1') else
+      									axi_a_cur_addr  when (axi0_wvalid_o = '1') else
+												set_a_axi_cur_reg; --mantain value
 
 i_wr0: entity work.axi_wr_fifo 
 generic map(
@@ -509,8 +520,8 @@ port map(
   axi_wrdy_i         =>  axi0_wrdy_i       , -- write ready
 
   -- data and configuration
-  wr_data_i          =>  axi_a_dat         , -- write data
-  wr_val_i           =>  axi_a_dat_dv      , -- write data valid
+  wr_data_i          =>  axi_a_dat_reg         , -- write data
+  wr_val_i           =>  axi_a_dat_dv_reg      , -- write data valid
   ctrl_start_addr_i  =>  set_a_axi_start   , -- range start address
   ctrl_stop_addr_i   =>  set_a_axi_stop    , -- range stop address
   ctrl_trig_size_i   =>  4'hF              , -- trigger level
@@ -887,8 +898,7 @@ end process;
    end
 end
 
-wire sys_en;
-assign sys_en = sys_wen | sys_ren;
+sys_en <= sys_wen or sys_ren;
 
 always @(posedge adc_clk_i)
 if (adc_rstn_i == 1'b0) begin
