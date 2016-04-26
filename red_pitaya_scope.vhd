@@ -204,7 +204,7 @@ signal axi_b_cur_addr                             : std_logic     ;
 -----------------------------------------------------------------------------------
 --  Trigger source selector
 
-signal adc_trig_ap_reg, adc_trig_ap_next        : std_logic                       ;
+signal adc_trig_ap_reg,  adc_trig_ap_next        : std_logic                       ;
 signal adc_trig_an_reg,  adc_trig_an_next       : std_logic                       ;
 signal adc_trig_bp_reg,  adc_trig_bp_next       : std_logic                       ;
 signal adc_trig_bn_reg,  adc_trig_bn_next       : std_logic                       ;
@@ -228,8 +228,8 @@ signal set_a_treshm_reg, set_a_treshm_next      : std_logic_vector(14-1 downto 0
 signal set_b_tresh_reg,  set_b_tresh_next       : std_logic_vector(14-1 downto 0) ;
 signal set_b_treshp_reg, set_b_treshp_next      : std_logic_vector(14-1 downto 0) ;
 signal set_b_treshm_reg, set_b_treshm_next      : std_logic_vector(14-1 downto 0) ;
-signal set_a_hyst_reg,   set_a_hyst_next        : std_logic_vector(14-1 downto 0) ;
-signal set_b_hyst_reg,   set_b_hyst_next        : std_logic_vector(14-1 downto 0) ;
+signal set_a_hyst_reg,   set_a_hyst_next        : std_logic_vector(14-1 downto 0) ;--todo:verify that it is not signed signal
+signal set_b_hyst_reg,   set_b_hyst_next        : std_logic_vector(14-1 downto 0) ;--todo:verify that it is not signed signal
 
 -----------------------------------------------------------------------------------
 --  External trigger
@@ -396,8 +396,8 @@ process(adc_clk_i)
 begin
 if (rising_edge(adc_clk_i)) then
    if ((adc_we_reg = '1') and (adc_dv_reg = '1')) then
-      adc_a_buf(to_integer(unsigned(adc_wp_reg))) <= adc_a_dat ;
-      adc_b_buf(to_integer(unsigned(adc_wp_reg))) <= adc_b_dat ;
+      adc_a_buf(to_integer(unsigned(adc_wp_reg))) <= adc_a_dat_reg ;
+      adc_b_buf(to_integer(unsigned(adc_wp_reg))) <= adc_b_dat_reg ;
    end
 end process;
 
@@ -410,6 +410,7 @@ if (rising_edge(adc_clk_i) then
   else
     adc_rval_reg <= adc_rval_next;
 end process;
+
   --next state logic
   adc_rval_next <= adc_rval_reg(2 downto 0) & (sys_ren or sys_wen);
 
@@ -424,6 +425,7 @@ begin
    adc_a_rd_reg    <= adc_a_rd_next;
    adc_b_rd_reg    <= adc_b_rd_next;
 end
+
 -- next state logic
   adc_raddr_next   <= sys_addr(RSZ+1 downto 2)                          ; -- address synchronous to clock
   adc_a_raddr_next <= adc_raddr_reg                                     ; -- double register 
@@ -482,13 +484,13 @@ end process;
   axi_a_dat_dv_next <=  '1' when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = to_unsigned(3, axi_a_dat_sel_reg'length)) and (adc_dv_reg = '1')) else 
                         '0';
 
-  axi_a_dat_next(16-1 downto 0) <=  signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else
+  axi_a_dat_next(16-1 downto 0) <=  signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else
                                     axi_a_dat_reg(16-1 downto 0); --mantain value 
-  axi_a_dat_next(32-1 downto 16) <= signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "01")) else
+  axi_a_dat_next(32-1 downto 16) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "01")) else
                                     axi_a_dat_reg(32-1 downto 16); --mantain value  
-  axi_a_dat_next(48-1 downto 32) <= signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "10")) else
+  axi_a_dat_next(48-1 downto 32) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "10")) else
                                     axi_a_dat_reg(48-1 downto 32); --mantain value  
-  axi_a_dat_next(64-1 downto 48) <= signed(adc_a_dat) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "11")) else
+  axi_a_dat_next(64-1 downto 48) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "11")) else
                                     axi_a_dat_reg(64-1 downto 48); --mantain value  
 
   set_a_axi_trig_next <=  (others => '0')                                       when (axi_a_clr = '1') else
@@ -496,7 +498,7 @@ end process;
                                                                                       (not axi_a_dly_do = '1') and (axi_a_we_reg = '1')) else -- save write pointer at trigger arrival
                           set_a_axi_trig_reg; --mantain value
 
-  set_a_axi_cur_next <= set_a_axi_start when (axi_a_clr = '1') else
+  set_a_axi_cur_next <= set_a_axi_start_reg when (axi_a_clr = '1') else
                         axi_a_cur_addr  when (axi0_wvalid_o = '1') else
                         set_a_axi_cur_reg; --mantain value
 
@@ -524,10 +526,10 @@ port map(
   -- data and configuration
   wr_data_i          =>  axi_a_dat_reg         , -- write data
   wr_val_i           =>  axi_a_dat_dv_reg      , -- write data valid
-  ctrl_start_addr_i  =>  set_a_axi_start   , -- range start address
+  ctrl_start_addr_i  =>  set_a_axi_start_reg   , -- range start address
   ctrl_stop_addr_i   =>  set_a_axi_stop    , -- range stop address
-  ctrl_trig_size_i   =>  4'hF              , -- trigger level
-  ctrl_wrap_i        =>  1'b1              , -- start from begining when reached stop
+  ctrl_trig_size_i   =>  x"F"              , -- trigger level
+  ctrl_wrap_i        =>  '1' 	             , -- start from begining when reached stop
   ctrl_clr_i         =>  axi_a_clr         , -- clear / flush
   stat_overflow_o    =>  open                  , -- overflow indicator
   stat_cur_addr_o    =>  axi_a_cur_addr    , -- current write address
@@ -541,38 +543,48 @@ port map(
 --
 --  AXI CHB connection
 
-assign axi_b_clr = adc_rst_do ;
+axi_b_clr = adc_rst_do_reg ;
+process(axi1_clk_o, axi1_rstn_o)
+begin
+ if (axi0_rstn_o = '0') then
+    axi_b_we_reg      <= '0' ;
+    axi_b_dat_reg     <= (others => '0');
+    axi_b_dat_sel_reg <=  (others => '0');
+    axi_b_dat_dv_reg  <= '0' ;
+    axi_b_dly_cnt_reg <= (others => '0') ;
+    axi_b_dly_do_reg  <= '0' ;
+    set_b_axi_cur_reg <= (other => '0');
+ elsif (rising_edge(axi0_clk_o) then
+    axi_b_we_reg      <= axi_b_we_next;      
+    axi_b_dat_reg     <= axi_b_dat_next;     
+    axi_b_dat_sel_reg <= axi_b_dat_sel_next; 
+    axi_b_dat_dv_reg  <= axi_b_dat_dv_next;  
+    axi_b_dly_cnt_reg <= axi_b_dly_cnt_next; 
+    axi_b_dly_do_reg  <= axi_b_dly_do_next;  
+    set_b_axi_cur_reg <= set_b_axi_cur_next;
+  end if;
+end process;
 
-always @(posedge axi1_clk_o) begin
-   if (axi1_rstn_o == 1'b0) begin
-      axi_b_we      <=  1'b0 ;
-      axi_b_dat     <= 64'h0 ;
-      axi_b_dat_sel <=  2'h0 ;
-      axi_b_dat_dv  <=  1'b0 ;
-      axi_b_dly_cnt <= 32'h0 ;
-      axi_b_dly_do  <=  1'b0 ;
-   end
-   else begin
-      if (adc_arm_do && set_b_axi_en)
-         axi_b_we <= 1'b1 ;
-      else if (((axi_b_dly_do || adc_trig) && (axi_b_dly_cnt == 32'h0)) || adc_rst_do) //delayed reached or reset
-         axi_b_we <= 1'b0 ;
+  --next state logic
+  axi_b_we_next <=  '1' when ((adc_arm_do_reg = '1') and (set_b_axi_en_reg = '1')) else
+      	          	'0' when ((axi_b_dly_do_reg = '1') or (adc_trig_reg = '1') and 
+                             (axi_b_dly_cnt_reg = to_unsigned(0, axi_b_dly_cnt_reg'length)) or
+                             (adc_rst_do_reg = '1')) else --delayed reached or reset
+                   	axi_b_we_reg; -- mantain value
 
-      if (adc_trig && axi_b_we)
-         axi_b_dly_do  <= 1'b1 ;
-      else if ((axi_b_dly_do && (axi_b_dly_cnt == 32'b0)) || axi_b_clr || adc_arm_do) //delayed reached or reset
-         axi_b_dly_do  <= 1'b0 ;
+  axi_b_dly_do_next  <= '1' when ((adc_trig_reg = '1') and (axi_b_we_reg = '1')) else
+                       	'0' when ((axi_b_dly_do_reg = '1') and 
+                                 (axi_b_dly_cnt_reg = to_unsigned(0, axi_b_dly_cnt_reg'length)) or 
+                                 (axi_b_clr or adc_arm_do_reg) else --delayed reached or reset
+                       	axi_b_dly_do_reg;
 
-      if (axi_b_dly_do && axi_b_we && adc_dv)
-         axi_b_dly_cnt <= axi_b_dly_cnt - 1;
-      else if (!axi_b_dly_do)
-         axi_b_dly_cnt <= set_b_axi_dly ;
+  axi_b_dly_cnt_next <= axi_b_dly_cnt_reg - 1 when ((axi_b_dly_do_reg = '1') and ((axi_b_we_reg = '1') and (adc_dv_reg = '1'))) else
+                       	set_b_axi_dly_reg     when (not axi_b_dly_do = '1') else
+                       	axi_b_dly_cnt_reg; -- mantain value
 
-      if (axi_b_clr)
-         axi_b_dat_sel <= 2'h0 ;
-      else if (axi_b_we && adc_dv)
-         axi_b_dat_sel <= axi_b_dat_sel + 2'h1 ;
-
+  axi_b_dat_sel_next <= (others => '0')       when (axi_b_clr = '1') else
+                        axi_b_dat_sel_reg + 1 when ((axi_b_we_reg = '1') and (adc_dv_reg = '1')) else
+                        axi_b_dat_sel_reg; -- mantain value
 
   axi_b_dat_dv_next <=  '1' when ((axi_b_we_reg = '1') and (axi_b_dat_sel_reg = to_unsigned(3, axi_b_dat_sel_reg'length)) and (adc_dv_reg = '1')) else 
                         '0';
@@ -686,14 +698,18 @@ end process;
 process(adc_clk_i, adc_rstn_i)
 begin
 if (adc_rstn_i = '0') then
-   adc_scht_ap_reg  <=  (others => '0') ;
-   adc_scht_an_reg  <=  (others => '0') ;
-   adc_scht_bp_reg  <=  (others => '0') ;
-   adc_scht_bn_reg  <=  (others => '0') ;
-   adc_trig_ap_reg  <=  '0' ;
-   adc_trig_an_reg  <=  '0' ;
-   adc_trig_bp_reg  <=  '0' ;
-   adc_trig_bn_reg  <=  '0' ;
+  adc_scht_ap_reg  <=  (others => '0') ;
+  adc_scht_an_reg  <=  (others => '0') ;
+  adc_scht_bp_reg  <=  (others => '0') ;
+  adc_scht_bn_reg  <=  (others => '0') ;
+  adc_trig_ap_reg  <=  '0' ;
+  adc_trig_an_reg  <=  '0' ;
+  adc_trig_bp_reg  <=  '0' ;
+  adc_trig_bn_reg  <=  '0' ;
+	set_a_treshp_reg	<=
+ 	set_a_treshm_reg	<=
+ 	set_b_treshp_reg	<=
+ 	set_b_treshm_reg	<=
 elsif (rising_edge(adc_clk_i) then
   adc_scht_ap_reg  <= adc_scht_ap_next; 
   adc_scht_an_reg  <= adc_scht_an_next; 
@@ -703,37 +719,41 @@ elsif (rising_edge(adc_clk_i) then
   adc_trig_an_reg  <= adc_trig_an_next; 
   adc_trig_bp_reg  <= adc_trig_bp_next; 
   adc_trig_bn_reg  <= adc_trig_bn_next; 
+	set_a_treshp_reg	<= set_a_treshp_next;
+ 	set_a_treshm_reg	<= set_a_treshm_next;
+ 	set_b_treshp_reg	<= set_b_treshp_next;
+ 	set_b_treshm_reg	<= set_b_treshm_next;
 end if;
 end process;
 
   --next state logic
-  set_a_treshp <= unsigned(set_a_tresh_reg) + set_a_hyst ; -- calculate positive
-   set_a_treshm <= set_a_tresh - set_a_hyst ; -- and negative treshold
-   set_b_treshp <= unsigned(set_b_tresh_reg) + unsigned(set_b_hyst) ;
-   set_b_treshm <= set_b_tresh - set_b_hyst ;
+  set_a_treshp_next <= unsigned(set_a_tresh_reg) + unsigned(set_a_hyst_reg) ; -- calculate positive
+  set_a_treshm_next <= unsigned(set_a_tresh_reg) - unsigned(set_a_hyst_reg) ; -- and negative treshold
+  set_b_treshp_next <= unsigned(set_b_tresh_reg) + unsigned(set_b_hyst_reg) ;
+  set_b_treshm_next <= unsigned(set_b_tresh_reg) - unsigned(set_b_hyst_reg) ;
 
-   if (adc_dv) begin
-           if ($signed(adc_a_dat) >= $signed(set_a_tresh ))      adc_scht_ap[0] <= 1'b1 ;  -- treshold reached
-      else if ($signed(adc_a_dat) <  $signed(set_a_treshm))      adc_scht_ap[0] <= 1'b0 ;  -- wait until it goes under hysteresis
-           if ($signed(adc_a_dat) <= $signed(set_a_tresh ))      adc_scht_an[0] <= 1'b1 ;  -- treshold reached
-      else if ($signed(adc_a_dat) >  $signed(set_a_treshp))      adc_scht_an[0] <= 1'b0 ;  -- wait until it goes over hysteresis
+  adc_scht_ap_next(0) <= 	'1' when ((adc_dv_reg = '1') and (signed(adc_a_dat_reg) >= signed(set_a_tresh_reg))) else  -- treshold reached
+													'0' when ((adc_dv_reg = '1') and (signed(adc_a_dat_reg) <  signed(set_a_treshm_reg))) else  -- wait until it goes under hysteresis
+													adc_scht_ap_reg(0); --mantain value
+ 	adc_scht_an_next(0) <= 	'1' when ((adc_dv_reg = '1') and (signed(adc_a_dat_reg) <= signed(set_a_tresh_reg))) else        -- treshold reached
+     											'0' when ((adc_dv_reg = '1') and (signed(adc_a_dat_reg) > (signed(set_a_treshp_reg))) else  -- wait until it goes over hysteresis
+													adc_scht_an_reg(0); --mantain value
+  adc_scht_bp_next(0) <= 	'1' when ((adc_dv_reg = '1') and (signed(adc_b_dat_reg) >= signed(set_b_tresh_reg))) else  -- treshold reached
+													'0' when ((adc_dv_reg = '1') and (signed(adc_b_dat_reg) <  signed(set_b_treshm_reg))) else  -- wait until it goes under hysteresis
+													adc_scht_bp_reg(0); --mantain value
+ 	adc_scht_bn_next(0) <= 	'1' when ((adc_dv_reg = '1') and (signed(adc_b_dat_reg) <= signed(set_b_tresh_reg))) else        -- treshold reached
+     											'0' when ((adc_dv_reg = '1') and (signed(adc_b_dat_reg) > (signed(set_b_treshp_reg))) else  -- wait until it goes over hysteresis
+													adc_scht_bn_reg(0); --mantain value
 
-           if ($signed(adc_b_dat) >= $signed(set_b_tresh ))      adc_scht_bp[0] <= 1'b1 ;
-      else if ($signed(adc_b_dat) <  $signed(set_b_treshm))      adc_scht_bp[0] <= 1'b0 ;
-           if ($signed(adc_b_dat) <= $signed(set_b_tresh ))      adc_scht_bn[0] <= 1'b1 ;
-      else if ($signed(adc_b_dat) >  $signed(set_b_treshp))      adc_scht_bn[0] <= 1'b0 ;
-   end
+  adc_scht_ap_next(1) <= adc_scht_ap_reg(0) ;
+  adc_scht_an_next(1) <= adc_scht_an_reg(0) ;
+  adc_scht_bp_next(1) <= adc_scht_bp_reg(0) ;
+  adc_scht_bn_next(1) <= adc_scht_bn_reg(0) ;
 
-   adc_scht_ap[1] <= adc_scht_ap[0] ;
-   adc_scht_an[1] <= adc_scht_an[0] ;
-   adc_scht_bp[1] <= adc_scht_bp[0] ;
-   adc_scht_bn[1] <= adc_scht_bn[0] ;
-
-   adc_trig_ap <= adc_scht_ap[0] && !adc_scht_ap[1] ; // make 1 cyc pulse 
-   adc_trig_an <= adc_scht_an[0] && !adc_scht_an[1] ;
-   adc_trig_bp <= adc_scht_bp[0] && !adc_scht_bp[1] ;
-   adc_trig_bn <= adc_scht_bn[0] && !adc_scht_bn[1] ;
-end
+  adc_trig_ap_next <= ((adc_scht_ap_reg(0)) and (not adc_scht_ap_reg(1)) ; -- make 1 cyc pulse 
+  adc_trig_an_next <= ((adc_scht_an_reg(0)) and (not adc_scht_an_reg(1)) ;
+  adc_trig_bp_next <= ((adc_scht_bp_reg(0)) and (not adc_scht_bp_reg(1)) ;
+  adc_trig_bn_next <= ((adc_scht_bn_reg(0)) and (not adc_scht_bn_reg(1)) ;
 
 -----------------------------------------------------------------------------------
 --  External trigger
@@ -771,54 +791,51 @@ end process;
    ext_trig_in_next <= ext_trig_in_reg(1 downto 0) & trig_ext_i ;
 
    -- look for input changes
-   if ((ext_trig_debp == 20'h0) && (ext_trig_in[1] && !ext_trig_in[2]))
-      ext_trig_debp <= set_deb_len ; // ~0.5ms
-   else if (ext_trig_debp != 20'h0)
-      ext_trig_debp <= ext_trig_debp - 20'd1 ;
-
-   if ((ext_trig_debn == 20'h0) && (!ext_trig_in[1] && ext_trig_in[2]))
-      ext_trig_debn <= set_deb_len ; // ~0.5ms
-   else if (ext_trig_debn != 20'h0)
-      ext_trig_debn <= ext_trig_debn - 20'd1 ;
+	ext_trig_debp_next <= set_deb_len_reg when ((ext_trig_debp_reg = std_logic_vector(to_unsigned(0, ext_trig_debp_reg'length))) and ((ext_trig_in(1) = '1') and (not ext_trig_in(2) = '1'))) else -- ~0.5ms
+												std_logic_vector(unsigned(ext_trig_debp_reg) - 1) when (ext_trig_debp_reg /= std_logic_vector(to_unsigned(0, ext_trig_debp_reg'length))) else
+												ext_trig_debp_reg; --mantain value
+	ext_trig_debn_next <= set_deb_len_reg when ((ext_trig_debn_reg = std_logic_vector(to_unsigned(0, ext_trig_debn_reg'length))) and ((not ext_trig_in(1) = '1') and (ext_trig_in(2) = '1'))) else -- ~0.5ms
+												std_logic_vector(unsigned(ext_trig_debn_reg) - 1) when (ext_trig_debn_reg /= std_logic_vector(to_unsigned(0, ext_trig_debn_reg'length))) else
+												ext_trig_debn_reg; --mantain value
 
    -- update output values
-   ext_trig_dp[1] <= ext_trig_dp[0] ;
-   if (ext_trig_debp == 20'h0)
-      ext_trig_dp[0] <= ext_trig_in[1] ;
+   ext_trig_dp_next(1) <= ext_trig_dp_reg(0) ;
+   ext_trig_dp_next(0) <= ext_trig_in_reg(1) when (ext_trig_debp_reg = std_logic_vector(to_unsigned(0, ext_trig_debp_reg'length))) else
+													ext_trig_dp_reg(0);	--mantain value
 
-   ext_trig_dn[1] <= ext_trig_dn[0] ;
-   if (ext_trig_debn == 20'h0)
-      ext_trig_dn[0] <= ext_trig_in[1] ;
+   ext_trig_dn_next(1) <= ext_trig_dn_reg(0) ;
+   ext_trig_dn_next(0) <= ext_trig_in_reg(1) when (ext_trig_debn_reg = std_logic_vector(to_unsigned(0, ext_trig_debn_reg'length))) else
+													ext_trig_dn_reg(0);	--mantain value
 
    ------------- ASG trigger
    -- synchronize FFs
-   asg_trig_in <= {asg_trig_in[1:0],trig_asg_i} ;
+   asg_trig_in_next <= (asg_trig_in_reg(1 downto 0) & trig_asg_i) ;
 
    -- look for input changes
-   if ((asg_trig_debp == 20'h0) && (asg_trig_in[1] && !asg_trig_in[2]))
-      asg_trig_debp <= set_deb_len ; // ~0.5ms
-   else if (asg_trig_debp != 20'h0)
-      asg_trig_debp <= asg_trig_debp - 20'd1 ;
-
-   if ((asg_trig_debn == 20'h0) && (!asg_trig_in[1] && asg_trig_in[2]))
-      asg_trig_debn <= set_deb_len ; // ~0.5ms
-   else if (asg_trig_debn != 20'h0)
-      asg_trig_debn <= asg_trig_debn - 20'd1 ;
+	asg_trig_debp_next <= set_deb_len_reg when ((asg_trig_debp_reg = std_logic_vector(to_unsigned(0, asg_trig_debp_reg'length))) and ((asg_trig_in(1) = '1') and (not asg_trig_in(2) = '1'))) else -- ~0.5ms
+												std_logic_vector(unsigned(asg_trig_debp_reg) - 1) when (asg_trig_debp_reg /= std_logic_vector(to_unsigned(0, asg_trig_debp_reg'length))) else
+												asg_trig_debp_reg; --mantain value
+	asg_trig_debn_next <= set_deb_len_reg when ((asg_trig_debn_reg = std_logic_vector(to_unsigned(0, asg_trig_debn_reg'length))) and ((not asg_trig_in(1) = '1') and (asg_trig_in(2) = '1'))) else -- ~0.5ms
+												std_logic_vector(unsigned(asg_trig_debn_reg) - 1) when (asg_trig_debn_reg /= std_logic_vector(to_unsigned(0, asg_trig_debn_reg'length))) else
+												asg_trig_debn_reg; --mantain value
 
    -- update output values
-   asg_trig_dp[1] <= asg_trig_dp[0] ;
-   if (asg_trig_debp == 20'h0)
-      asg_trig_dp[0] <= asg_trig_in[1] ;
+   asg_trig_dp_next(1) <= asg_trig_dp_reg(0) ;
+   asg_trig_dp_next(0) <= asg_trig_in_reg(1) when (asg_trig_debp_reg = std_logic_vector(to_unsigned(0, asg_trig_debp_reg'length))) else
+	  											asg_trig_dp_reg(0);	--mantain value
 
-   asg_trig_dn[1] <= asg_trig_dn[0] ;
-   if (asg_trig_debn == 20'h0)
-      asg_trig_dn[0] <= asg_trig_in[1] ;
-end
+   asg_trig_dn_next(1) <= asg_trig_dn_reg(0) ;
+   asg_trig_dn_next(0) <= asg_trig_in_reg(1) when (asg_trig_debn_reg = std_logic_vector(to_unsigned(0, asg_trig_debn_reg'length))) else
+													asg_trig_dn_reg(0);	--mantain value
 
-  ext_trig_p = (ext_trig_dp == 2'b01) ;
-  ext_trig_n = (ext_trig_dn == 2'b10) ;
-  asg_trig_p = (asg_trig_dp == 2'b01) ;
-  asg_trig_n = (asg_trig_dn == 2'b10) ;
+  ext_trig_p <= '1' when (ext_trig_dp_reg = "01") else
+								'0';
+  ext_trig_n <= '1' when (ext_trig_dn_reg = "10") else
+								'0';
+  asg_trig_p <= '1' when (asg_trig_dp_reg = "01") else
+								'0';
+  asg_trig_n <= '1' when (asg_trig_dn_reg = "10") else
+								'0';
 
 -----------------------------------------------------------------------------------
 --  System bus connection
@@ -830,7 +847,7 @@ if (adc_rstn_i = '0') then
    set_a_tresh_reg   <= std_logic_vector(to_unsigned(5000,set_a_tresh_reg'length))  ;
    set_b_tresh_reg   <= std_logic_vector(to_unsigned(5000,set_b_tresh_reg'length));--todo: verificar esta asignacion -14'd5000   ;
    set_dly_reg       <= (others => '0')      ;
-   set_dec_reg       <= (0 => '1', others => '0');--17'd1      ;
+   set_dec_reg       <= std_logic_vector(to_unsigned(1,set_dec_reg'length));--17'd1      ;
    set_a_hyst_reg    <= std_logic_vector(to_unsigned(20,set_a_hyst_reg'length))     ;
    set_b_hyst_reg    <= std_logic_vector(to_unsigned(20,set_b_hyst_reg'length));--14'd20     ;
    set_avg_en_reg    <= '1'      ;
@@ -868,49 +885,72 @@ elsif (rising_edge(adc_clk_i)) then
 end if; 
 end process;
 
-
-   if (sys_wen) then
-      if (sys_addr(19:0)=20'h00)   adc_we_keep   <= sys_wdata[     3] ;
-
-      if (sys_addr(19:0)=20'h08)   set_a_tresh_next   <= sys_wdata(14-1 downto 0) ;
-      if (sys_addr(19:0)=20'h0C)   set_b_tresh_next   <= sys_wdata(14-1 downto 0) ;
-      if (sys_addr(19:0)=20'h10)   set_dly       <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h14)   set_dec       <= sys_wdata(17-1 downto 0) ;
-      if (sys_addr(19:0)=20'h20)   set_a_hyst_next    <= sys_wdata(14-1 downto 0) ;
-      if (sys_addr(19:0)=20'h24)   set_b_hyst_next    <= sys_wdata(14-1 downto 0) ;
-      if (sys_addr(19:0)=20'h28)   set_avg_en    <= sys_wdata(     downto 0) ;
-
-      if (sys_addr(19:0)=20'h30)   set_a_filt_aa <= sys_wdata(18-1 downto 0) ;
-      if (sys_addr(19:0)=20'h34)   set_a_filt_bb <= sys_wdata(25-1 downto 0) ;
-      if (sys_addr(19:0)=20'h38)   set_a_filt_kk <= sys_wdata(25-1 downto 0) ;
-      if (sys_addr(19:0)=20'h3C)   set_a_filt_pp <= sys_wdata(25-1 downto 0) ;
-      if (sys_addr(19:0)=20'h40)   set_b_filt_aa <= sys_wdata(18-1 downto 0) ;
-      if (sys_addr(19:0)=20'h44)   set_b_filt_bb <= sys_wdata(25-1 downto 0) ;
-      if (sys_addr(19:0)=20'h48)   set_b_filt_kk <= sys_wdata(25-1 downto 0) ;
-      if (sys_addr(19:0)=20'h4C)   set_b_filt_pp <= sys_wdata(25-1 downto 0) ;
-
-      if (sys_addr(19:0)=20'h50)   set_a_axi_start <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h54)   set_a_axi_stop  <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h58)   set_a_axi_dly   <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h5C)   set_a_axi_en    <= sys_wdata(     0) ;
-
-      if (sys_addr(19:0)=20'h70)   set_b_axi_start <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h74)   set_b_axi_stop  <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h78)   set_b_axi_dly   <= sys_wdata(32-1 downto 0) ;
-      if (sys_addr(19:0)=20'h7C)   set_b_axi_en    <= sys_wdata(     0) ;
-
-      if (sys_addr(19:0)=20'h90)   set_deb_len <= sys_wdata(20-1 downto 0) ;
-   end
-end
+	--next state logic
+	adc_we_keep_next   <= 	sys_wdata(     3) 	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"00",sys_addr(19 downto 0)'length)))) else
+	 											adc_we_keep_reg;
+                                                                           
+  set_a_tresh_next   <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"08",sys_addr(19 downto 0)'length)))) else
+												set_a_tresh_reg;
+  set_b_tresh_next   <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"0C",sys_addr(19 downto 0)'length)))) else
+												set_b_tresh_reg;
+  set_dly_next       <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"10",sys_addr(19 downto 0)'length)))) else
+												set_dly_reg;
+  set_dec_next       <= sys_wdata(17-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"14",sys_addr(19 downto 0)'length)))) else
+												set_dec_reg;
+  set_a_hyst_next    <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"20",sys_addr(19 downto 0)'length)))) else
+												set_a_hyst_reg;
+  set_b_hyst_next    <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"24",sys_addr(19 downto 0)'length)))) else
+												set_b_hyst_reg;
+  set_avg_en_next    <= sys_wdata(     0)     when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"28",sys_addr(19 downto 0)'length)))) else
+												set_avg_en_reg;
+                                                                          
+  set_a_filt_aa_next <= sys_wdata(18-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"30",sys_addr(19 downto 0)'length)))) else 
+												set_a_filt_aa_reg;
+  set_a_filt_bb_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"34",sys_addr(19 downto 0)'length)))) else 
+												set_a_filt_bb_reg;
+  set_a_filt_kk_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"38",sys_addr(19 downto 0)'length)))) else 
+												set_a_filt_kk_reg;
+  set_a_filt_pp_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"3C",sys_addr(19 downto 0)'length)))) else 
+												set_a_filt_pp_reg;
+  set_b_filt_aa_next <= sys_wdata(18-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"40",sys_addr(19 downto 0)'length)))) else 
+												set_b_filt_aa_reg;
+  set_b_filt_bb_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"44",sys_addr(19 downto 0)'length)))) else 
+												set_b_filt_bb_reg;
+  set_b_filt_kk_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"48",sys_addr(19 downto 0)'length)))) else 
+												set_b_filt_kk_reg;
+  set_b_filt_pp_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4C",sys_addr(19 downto 0)'length)))) else 
+												set_b_filt_pp_reg;
+                                                                           
+  set_a_axi_start_next <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"50",sys_addr(19 downto 0)'length)))) else
+												set_a_axi_start_reg;
+  set_a_axi_stop_next  <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"54",sys_addr(19 downto 0)'length)))) else
+												set_a_axi_stop_reg;
+  set_a_axi_dly_next   <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"58",sys_addr(19 downto 0)'length)))) else
+												set_a_axi_dly_reg;
+  set_a_axi_en_next    <= sys_wdata(     0)         when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"5C",sys_addr(19 downto 0)'length)))) else
+												set_a_axi_en_reg;
+                                                                          
+  set_b_axi_start_next <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"70",sys_addr(19 downto 0)'length)))) else
+												set_b_axi_start_reg;
+  set_b_axi_stop_next  <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"74",sys_addr(19 downto 0)'length)))) else
+												set_b_axi_stop_reg;
+  set_b_axi_dly_next   <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"78",sys_addr(19 downto 0)'length)))) else
+												set_b_axi_dly_reg;
+  set_b_axi_en_next    <= sys_wdata(     0)         when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"7C",sys_addr(19 downto 0)'length)))) else
+												set_b_axi_en_reg;
+                                                                           
+  set_deb_len_next <= sys_wdata(20-1 downto 0)	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"90",sys_addr(19 downto 0)'length)))) else
+												set_deb_len_reg;
 
 sys_en <= '1' when ((sys_wen = '1') or (sys_ren = '1')) else
 					'0';
 
-always @(posedge adc_clk_i)
-if (adc_rstn_i == 1'b0) begin
-   sys_err <= 1'b0 ;
-   sys_ack <= 1'b0 ;
-end else begin
+process(adc_clk_i, adc_rstn_i)
+begin
+if (adc_rstn_i = '0') then
+   sys_err <= '0' ;
+   sys_ack <= '0' ;
+elsif (rising_edge(adc_clk_i)) then
    sys_err <= 1'b0 ;
 
    casez (sys_addr[19:0])
@@ -923,8 +963,8 @@ end else begin
 
      20'h00008 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_tresh_reg}        ; end
      20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh_reg}        ; end
-     20'h00010 : begin sys_ack <= sys_en;          sys_rdata <= {               set_dly}            ; end
-     20'h00014 : begin sys_ack <= sys_en;          sys_rdata <= {{32-17{1'b0}}, set_dec}            ; end
+     20'h00010 : begin sys_ack <= sys_en;          sys_rdata <= { set_dly_reg}            ; end
+     20'h00014 : begin sys_ack <= sys_en;          sys_rdata <= {{32-17{1'b0}}, set_dec_reg}            ; end
 
      20'h00018 : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_cur}        ; end
      20'h0001C : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_trig}       ; end
@@ -945,7 +985,7 @@ end else begin
      20'h00048 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_kk}      ; end
      20'h0004C : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_pp}      ; end
 
-     20'h00050 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_start     ; end
+     20'h00050 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_star     ; end
      20'h00054 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_stop      ; end
      20'h00058 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_dly       ; end
      20'h0005C : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_a_axi_en}       ; end
@@ -959,7 +999,7 @@ end else begin
      20'h00080 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_trig      ; end
      20'h00084 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_cur       ; end
 
-     20'h00090 : begin sys_ack <= sys_en;          sys_rdata <= {{32-20{1'b0}}, set_deb_len}        ; end
+     20'h00090 : begin sys_ack <= sys_en;          sys_rdata <= {{32-20{1'b0}}, set_deb_len_reg}        ; end
 
      20'h1???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_a_rd}              ; end
      20'h2???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_b_rd}              ; end
