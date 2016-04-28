@@ -303,14 +303,14 @@ end if;
 end process;
 
   --next state logic
-  adc_dec_cnt_next  <=  to_unsigned(1, adc_dec_cnt_next'length) when ((adc_dec_cnt_reg >= set_dec_reg) || adc_arm_do_reg) else -- start again or arm
+  adc_dec_cnt_next  <=  to_unsigned(1, adc_dec_cnt_next'length) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1')) else -- start again or arm
                         adc_dec_cnt_reg + 1;
-  adc_a_sum_next    <=  signed(adc_a_filt_out) when ((adc_dec_cnt_reg >= set_dec_reg) || adc_arm_do_reg) else
+  adc_a_sum_next    <=  signed(adc_a_filt_out) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1') else
                         adc_a_sum_reg + signed(adc_a_filt_out);
-  adc_b_sum_next    <=  signed(adc_b_filt_out) when ((adc_dec_cnt_reg >= set_dec_reg) || adc_arm_do_reg) else
+  adc_b_sum_next    <=  signed(adc_b_filt_out) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1') else
                         adc_b_sum_reg + signed(adc_b_filt_out);
 
-  adc_dv_next <=  '1' when (adc_dec_cnt_reg >= set_dec_reg) else
+  adc_dv_next <=  '1' when (adc_dec_cnt_reg >= unsigned(set_dec_reg)) else
                   '0';
   with (set_dec_reg and ( set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
                           set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
@@ -463,14 +463,12 @@ end process;
   --next state logic
   axi_a_we_next <=  '1' when ((adc_arm_do_reg = '1') and (set_a_axi_en_reg = '1')) else
                     '0' when ((axi_a_dly_do_reg = '1') or (adc_trig_reg = '1') and 
-                              (axi_a_dly_cnt_reg = to_unsigned(0, axi_a_dly_cnt_reg'length)) or
-                              (adc_rst_do_reg = '1')) else --delayed reached or reset
+                              (axi_a_dly_cnt_reg = 0) or (adc_rst_do_reg = '1')) else --delayed reached or reset
                     axi_a_we_reg; -- mantain value
 
   axi_a_dly_do_next  <= '1' when ((adc_trig_reg = '1') and (axi_a_we_reg = '1')) else
-                        '0' when ((axi_a_dly_do_reg = '1') and 
-                                  (axi_a_dly_cnt_reg = to_unsigned(0, axi_a_dly_cnt_reg'length)) or 
-                                  (axi_a_clr or adc_arm_do_reg) else --delayed reached or reset
+                        '0' when ((axi_a_dly_do_reg = '1') and (axi_a_dly_cnt_reg = 0) or 
+                                  ((axi_a_clr = '1') or (adc_arm_do_reg = '1'))) else --delayed reached or reset
                         axi_a_dly_do_reg;
 
   axi_a_dly_cnt_next <= axi_a_dly_cnt_reg - 1 when ((axi_a_dly_do_reg = '1') and ((axi_a_we_reg = '1') and (adc_dv_reg = '1'))) else
@@ -481,7 +479,7 @@ end process;
                         axi_a_dat_sel_reg + 1 when ((axi_a_we_reg = '1') and (adc_dv_reg = '1')) else
                         axi_a_dat_sel_reg; -- mantain value
 
-  axi_a_dat_dv_next <=  '1' when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = to_unsigned(3, axi_a_dat_sel_reg'length)) and (adc_dv_reg = '1')) else 
+  axi_a_dat_dv_next <=  '1' when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
                         '0';
 
   axi_a_dat_next(16-1 downto 0) <=  signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else
@@ -568,14 +566,12 @@ end process;
   --next state logic
   axi_b_we_next <=  '1' when ((adc_arm_do_reg = '1') and (set_b_axi_en_reg = '1')) else
       	          	'0' when ((axi_b_dly_do_reg = '1') or (adc_trig_reg = '1') and 
-                             (axi_b_dly_cnt_reg = to_unsigned(0, axi_b_dly_cnt_reg'length)) or
-                             (adc_rst_do_reg = '1')) else --delayed reached or reset
+                             (axi_b_dly_cnt_reg = 0) or (adc_rst_do_reg = '1')) else --delayed reached or reset
                    	axi_b_we_reg; -- mantain value
 
   axi_b_dly_do_next  <= '1' when ((adc_trig_reg = '1') and (axi_b_we_reg = '1')) else
-                       	'0' when ((axi_b_dly_do_reg = '1') and 
-                                 (axi_b_dly_cnt_reg = to_unsigned(0, axi_b_dly_cnt_reg'length)) or 
-                                 (axi_b_clr or adc_arm_do_reg) else --delayed reached or reset
+                       	'0' when ((axi_b_dly_do_reg = '1') and (axi_b_dly_cnt_reg = 0) or 
+                                 ((axi_b_clr = '1') or (adc_arm_do_reg = '1'))) else --delayed reached or reset
                        	axi_b_dly_do_reg;
 
   axi_b_dly_cnt_next <= axi_b_dly_cnt_reg - 1 when ((axi_b_dly_do_reg = '1') and ((axi_b_we_reg = '1') and (adc_dv_reg = '1'))) else
@@ -586,7 +582,7 @@ end process;
                         axi_b_dat_sel_reg + 1 when ((axi_b_we_reg = '1') and (adc_dv_reg = '1')) else
                         axi_b_dat_sel_reg; -- mantain value
 
-  axi_b_dat_dv_next <=  '1' when ((axi_b_we_reg = '1') and (axi_b_dat_sel_reg = to_unsigned(3, axi_b_dat_sel_reg'length)) and (adc_dv_reg = '1')) else 
+  axi_b_dat_dv_next <=  '1' when ((axi_b_we_reg = '1') and (axi_b_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
                         '0';
 
   axi_b_dat_next(16-1 downto 0) <=  signed(adc_b_dat) when ((axi_b_we_reg = '1') and (adc_dv_reg = '1') and (axi_b_dat_sel = "00")) else
@@ -676,8 +672,7 @@ end process;
                       '0';
 
   set_trig_src_next <=  sys_wdata(3 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4", sys_addr(19 downto 0)'length)))) else 
-                        (others => '0')       when ((adc_dly_do_reg = '1') or (adc_trig_reg = '1') and (adc_dly_cnt_reg = to_unsigned(0, adc_dly_cnt_reg'length)) or 
-                                                    (adc_rst_do_reg = '1')) else --delayed reached or reset
+                        (others => '0')       when ((adc_dly_do_reg = '1') or (adc_trig_reg = '1') and (adc_dly_cnt_reg = 0)) or (adc_rst_do_reg = '1')) else --delayed reached or reset
                         set_trig_src_reg ;
 
   with (set_trig_src_reg) select
