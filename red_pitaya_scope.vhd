@@ -136,6 +136,8 @@ signal adc_dec_cnt_reg, adc_dec_cnt_next          : unsigned(17-1 downto 0);
 signal set_avg_en_reg, set_avg_en_next            : std_logic;
 signal adc_dv_reg, adc_dv_next                    : std_logic;
 
+--hopo
+signal set_dec_aux                  							: std_logic_vector(17-1 downto 0);
 -----------------------------------------------------------------------------------
 --  ADC buffer RAM
 
@@ -312,28 +314,29 @@ end process;
 
   adc_dv_next <=  '1' when (adc_dec_cnt_reg >= unsigned(set_dec_reg)) else
                   '0';
-  with (set_dec_reg and ( set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
-                          set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
-                          set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
-                          set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
-                          set_avg_en_reg)) select
+  set_dec_aux <= (set_dec_reg and ( set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & 
+                  set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg & set_avg_en_reg));
+
+	with set_dec_aux select
 --todo: check if the 15 is ok. For my it must be 14
-    adc_a_dat_next <= adc_a_filt_out                      when  std_logic_vector(to_unsigned(x"0", set_dec_reg'length)), --17'h0
-                      adc_a_sum_reg(15+0 downto 0)        when  std_logic_vector(to_unsigned(x"1", set_dec_reg'length)), --17'h1     
-                      adc_a_sum_reg(15+3 downto 3)        when  std_logic_vector(to_unsigned(x"8", set_dec_reg'length)), --17'h8     
-                      edc_a_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(x"40", set_dec_reg'length)),      
-                      adc_a_sum_reg(15+10 downto 10)      when  std_logic_vector(to_unsigned(x"400", set_dec_reg'length)),       
-                      adc_a_sum_reg(15+13 downto 13)      when  std_logic_vector(to_unsigned(x"2000", set_dec_reg'length)),     
-                      adc_a_sum_reg(15+16 downto 16)      when  std_logic_vector(to_unsigned(x"10000", set_dec_reg'length)),     
+    adc_a_dat_next <= adc_a_filt_out                      when  std_logic_vector(to_unsigned(16#0#, set_dec_reg'length)), --17'h0
+                      adc_a_sum_reg(15+0 downto 0)        when  std_logic_vector(to_unsigned(16#1#, set_dec_reg'length)), --17'h1     
+                      adc_a_sum_reg(15+3 downto 3)        when  std_logic_vector(to_unsigned(16#8#, set_dec_reg'length)), --17'h8     
+                      edc_a_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(16#40#, set_dec_reg'length)),      
+                      adc_a_sum_reg(15+10 downto 10)      when  std_logic_vector(to_unsigned(16#400#, set_dec_reg'length)),       
+                      adc_a_sum_reg(15+13 downto 13)      when  std_logic_vector(to_unsigned(16#2000#, set_dec_reg'length)),     
+                      adc_a_sum_reg(15+16 downto 16)      when  std_logic_vector(to_unsigned(16#10000#, set_dec_reg'length)),     
                       adc_a_sum_reg(15+0 downto  0)       when  others ;      
 
-    adc_b_dat_next <= adc_b_filt_out                      when  std_logic_vector(to_unsigned(x"0", set_dec_reg'length)), --17'h0
-                      adc_b_sum_reg(15+0 downto 0)        when  std_logic_vector(to_unsigned(x"1", set_dec_reg'length)), --17'h1     
-                      adc_b_sum_reg(15+3 downto 3)        when  std_logic_vector(to_unsigned(x"8", set_dec_reg'length)), --17'h8     
-                      edc_b_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(x"40", set_dec_reg'length)),      
-                      adc_b_sum_reg(15+10 downto 10)      when  std_logic_vector(to_unsigned(x"400", set_dec_reg'length)),       
-                      adc_b_sum_reg(15+13 downto 13)      when  std_logic_vector(to_unsigned(x"2000", set_dec_reg'length)),     
-                      adc_b_sum_reg(15+16 downto 16)      when  std_logic_vector(to_unsigned(x"10000", set_dec_reg'length)),     
+	with set_dec_aux select
+--todo: check if the 15 is ok. For my it must be 14
+    adc_b_dat_next <= adc_b_filt_out                      when  std_logic_vector(to_unsigned(16#0#, set_dec_reg'length)), --17'h0
+                      adc_b_sum_reg(15+0 downto 0)        when  std_logic_vector(to_unsigned(16#1#, set_dec_reg'length)), --17'h1     
+                      adc_b_sum_reg(15+3 downto 3)        when  std_logic_vector(to_unsigned(16#8#, set_dec_reg'length)), --17'h8     
+                      edc_b_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(16#40#, set_dec_reg'length)),      
+                      adc_b_sum_reg(15+10 downto 10)      when  std_logic_vector(to_unsigned(16#400#, set_dec_reg'length)),       
+                      adc_b_sum_reg(15+13 downto 13)      when  std_logic_vector(to_unsigned(16#2000#, set_dec_reg'length)),     
+                      adc_b_sum_reg(15+16 downto 16)      when  std_logic_vector(to_unsigned(16#10000#, set_dec_reg'length)),     
                       adc_b_sum_reg(15+0 downto  0)       when  others ;      
 
 -----------------------------------------------------------------------------------
@@ -349,7 +352,7 @@ if (adc_rstn_i = '0') then
   adc_wp_cur_reg  <= (others => '0');
   adc_we_cnt_reg  <= (others => '0')     ;
   adc_dly_cnt_reg <= (others => '0')     ;
-  adc_dly_do_reg  <=  1'b0      ;
+  adc_dly_do_reg  <=  '0'     ;
 elsif (rising_edge(adc_clk_i)) then
   adc_wp_reg      <= adc_wp_next;     
   adc_we_reg      <= adc_we_next;     
@@ -482,14 +485,10 @@ end process;
   axi_a_dat_dv_next <=  '1' when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
                         '0';
 
-  axi_a_dat_next(16-1 downto 0) <=  signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else
-                                    axi_a_dat_reg(16-1 downto 0); --mantain value 
-  axi_a_dat_next(32-1 downto 16) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "01")) else
-                                    axi_a_dat_reg(32-1 downto 16); --mantain value  
-  axi_a_dat_next(48-1 downto 32) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "10")) else
-                                    axi_a_dat_reg(48-1 downto 32); --mantain value  
-  axi_a_dat_next(64-1 downto 48) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "11")) else
-                                    axi_a_dat_reg(64-1 downto 48); --mantain value  
+  axi_a_dat_next(16-1 downto 0) <=  signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else axi_a_dat_reg(16-1 downto 0); --mantain value 
+  axi_a_dat_next(32-1 downto 16) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "01")) else axi_a_dat_reg(32-1 downto 16); --mantain value  
+  axi_a_dat_next(48-1 downto 32) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "10")) else axi_a_dat_reg(48-1 downto 32); --mantain value  
+  axi_a_dat_next(64-1 downto 48) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "11")) else axi_a_dat_reg(64-1 downto 48); --mantain value  
 
   set_a_axi_trig_next <=  (others => '0')                                       when (axi_a_clr = '1') else
                           (axi_a_cur_addr(32-1 downto 3) & axi_a_dat_sel & '0') when ((adc_trig_reg = '1') and 
@@ -667,11 +666,11 @@ end process;
   
   adc_rst_do_next  <= '1' when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(0, sys_addr(19 downto 0)'length)) and (sys_wdata(1) = '1')) else
                       '0';
-  adc_trig_sw_next <= '1' when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4", sys_addr(19 downto 0)'length)) and
+  adc_trig_sw_next <= '1' when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#4#, sys_addr(19 downto 0)'length)) and
                                 (sys_wdata(3 downto 0) = std_logic_vector(to_unsigned(1, sys_wdata(3 downto 0)'length))))) else -- SW trigger
                       '0';
 
-  set_trig_src_next <=  sys_wdata(3 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4", sys_addr(19 downto 0)'length)))) else 
+  set_trig_src_next <=  sys_wdata(3 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#4#, sys_addr(19 downto 0)'length)))) else 
                         (others => '0')       when ((adc_dly_do_reg = '1') or (adc_trig_reg = '1') and (adc_dly_cnt_reg = 0)) or (adc_rst_do_reg = '1')) else --delayed reached or reset
                         set_trig_src_reg ;
 
@@ -881,125 +880,111 @@ end if;
 end process;
 
 	--next state logic
-	adc_we_keep_next   <= 	sys_wdata(     3) 	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"00",sys_addr(19 downto 0)'length)))) else
-	 											adc_we_keep_reg;
+	adc_we_keep_next   <= 	sys_wdata(     3) 	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#00#,sys_addr(19 downto 0)'length)))) else adc_we_keep_reg;
                                                                            
-  set_a_tresh_next   <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"08",sys_addr(19 downto 0)'length)))) else
-												set_a_tresh_reg;
-  set_b_tresh_next   <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"0C",sys_addr(19 downto 0)'length)))) else
-												set_b_tresh_reg;
-  set_dly_next       <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"10",sys_addr(19 downto 0)'length)))) else
-												set_dly_reg;
-  set_dec_next       <= sys_wdata(17-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"14",sys_addr(19 downto 0)'length)))) else
-												set_dec_reg;
-  set_a_hyst_next    <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"20",sys_addr(19 downto 0)'length)))) else
-												set_a_hyst_reg;
-  set_b_hyst_next    <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"24",sys_addr(19 downto 0)'length)))) else
-												set_b_hyst_reg;
-  set_avg_en_next    <= sys_wdata(     0)     when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"28",sys_addr(19 downto 0)'length)))) else
-												set_avg_en_reg;
+  set_a_tresh_next   <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#08#,sys_addr(19 downto 0)'length)))) else set_a_tresh_reg;
+  set_b_tresh_next   <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#0C#,sys_addr(19 downto 0)'length)))) else 	set_b_tresh_reg;
+  set_dly_next       <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#10#,sys_addr(19 downto 0)'length)))) else set_dly_reg;
+  set_dec_next       <= sys_wdata(17-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#14#,sys_addr(19 downto 0)'length)))) else set_dec_reg;
+  set_a_hyst_next    <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#20#,sys_addr(19 downto 0)'length)))) else set_a_hyst_reg;
+  set_b_hyst_next    <= sys_wdata(14-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#24#,sys_addr(19 downto 0)'length)))) else set_b_hyst_reg;
+  set_avg_en_next    <= sys_wdata(     0)     	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#28#,sys_addr(19 downto 0)'length)))) else set_avg_en_reg;
                                                                           
-  set_a_filt_aa_next <= sys_wdata(18-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"30",sys_addr(19 downto 0)'length)))) else 
-												set_a_filt_aa_reg;
-  set_a_filt_bb_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"34",sys_addr(19 downto 0)'length)))) else 
-												set_a_filt_bb_reg;
-  set_a_filt_kk_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"38",sys_addr(19 downto 0)'length)))) else 
-												set_a_filt_kk_reg;
-  set_a_filt_pp_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"3C",sys_addr(19 downto 0)'length)))) else 
-												set_a_filt_pp_reg;
-  set_b_filt_aa_next <= sys_wdata(18-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"40",sys_addr(19 downto 0)'length)))) else 
-												set_b_filt_aa_reg;
-  set_b_filt_bb_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"44",sys_addr(19 downto 0)'length)))) else 
-												set_b_filt_bb_reg;
-  set_b_filt_kk_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"48",sys_addr(19 downto 0)'length)))) else 
-												set_b_filt_kk_reg;
-  set_b_filt_pp_next <= sys_wdata(25-1 downto 0)    when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"4C",sys_addr(19 downto 0)'length)))) else 
-												set_b_filt_pp_reg;
+  set_a_filt_aa_next <= sys_wdata(18-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#30#,sys_addr(19 downto 0)'length)))) else set_a_filt_aa_reg;
+  set_a_filt_bb_next <= sys_wdata(25-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#34#,sys_addr(19 downto 0)'length)))) else set_a_filt_bb_reg;
+  set_a_filt_kk_next <= sys_wdata(25-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#38#,sys_addr(19 downto 0)'length)))) else set_a_filt_kk_reg;
+  set_a_filt_pp_next <= sys_wdata(25-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#3C#,sys_addr(19 downto 0)'length)))) else set_a_filt_pp_reg;
+  set_b_filt_aa_next <= sys_wdata(18-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#40#,sys_addr(19 downto 0)'length)))) else set_b_filt_aa_reg;
+  set_b_filt_bb_next <= sys_wdata(25-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#44#,sys_addr(19 downto 0)'length)))) else set_b_filt_bb_reg;
+  set_b_filt_kk_next <= sys_wdata(25-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#48#,sys_addr(19 downto 0)'length)))) else set_b_filt_kk_reg;
+  set_b_filt_pp_next <= sys_wdata(25-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#4C#,sys_addr(19 downto 0)'length)))) else set_b_filt_pp_reg;
                                                                            
-  set_a_axi_start_next <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"50",sys_addr(19 downto 0)'length)))) else
-												set_a_axi_start_reg;
-  set_a_axi_stop_next  <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"54",sys_addr(19 downto 0)'length)))) else
-												set_a_axi_stop_reg;
-  set_a_axi_dly_next   <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"58",sys_addr(19 downto 0)'length)))) else
-												set_a_axi_dly_reg;
-  set_a_axi_en_next    <= sys_wdata(     0)         when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"5C",sys_addr(19 downto 0)'length)))) else
-												set_a_axi_en_reg;
+  set_a_axi_start_next <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#50#,sys_addr(19 downto 0)'length)))) else set_a_axi_start_reg;
+  set_a_axi_stop_next  <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#54#,sys_addr(19 downto 0)'length)))) else set_a_axi_stop_reg;
+  set_a_axi_dly_next   <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#58#,sys_addr(19 downto 0)'length)))) else set_a_axi_dly_reg;
+  set_a_axi_en_next    <= sys_wdata(     0)        when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#5C#,sys_addr(19 downto 0)'length)))) else set_a_axi_en_reg;
                                                                           
-  set_b_axi_start_next <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"70",sys_addr(19 downto 0)'length)))) else
-												set_b_axi_start_reg;
-  set_b_axi_stop_next  <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"74",sys_addr(19 downto 0)'length)))) else
-												set_b_axi_stop_reg;
-  set_b_axi_dly_next   <= sys_wdata(32-1 downto 0)   when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"78",sys_addr(19 downto 0)'length)))) else
-												set_b_axi_dly_reg;
-  set_b_axi_en_next    <= sys_wdata(     0)         when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"7C",sys_addr(19 downto 0)'length)))) else
-												set_b_axi_en_reg;
-                                                                           
-  set_deb_len_next <= sys_wdata(20-1 downto 0)	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(x"90",sys_addr(19 downto 0)'length)))) else
-												set_deb_len_reg;
+  set_b_axi_start_next <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#70#,sys_addr(19 downto 0)'length)))) else set_b_axi_start_reg;
+  set_b_axi_stop_next  <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#74#,sys_addr(19 downto 0)'length)))) else set_b_axi_stop_reg;
+  set_b_axi_dly_next   <= sys_wdata(32-1 downto 0) when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#78#,sys_addr(19 downto 0)'length)))) else set_b_axi_dly_reg;
+  set_b_axi_en_next    <= sys_wdata(     0)         when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#7C#,sys_addr(19 downto 0)'length)))) else set_b_axi_en_reg;
+                                                                            
+  set_deb_len_next <= sys_wdata(20-1 downto 0)	when ((sys_wen = '1') and (sys_addr(19 downto 0) = std_logic_vector(to_unsigned(16#90#,sys_addr(19 downto 0)'length)))) else set_deb_len_reg;
 
-sys_en <= '1' when ((sys_wen = '1') or (sys_ren = '1')) else
-					'0';
+sys_en <= '1' when ((sys_wen = '1') or (sys_ren = '1')) else '0';
+
+sys_err <= sys_err_i_reg;
+sys_ack <= sys_ack_i_reg;
 
 process(adc_clk_i, adc_rstn_i)
 begin
 if (adc_rstn_i = '0') then
-   sys_err <= '0' ;
-   sys_ack <= '0' ;
+   sys_err_i_reg <= '0' ;
+   sys_ack_i_reg <= '0' ;
+	sys_rdata_i_reg <= (others => '0');
 elsif (rising_edge(adc_clk_i)) then
-   sys_err <= 1'b0 ;
+   sys_err_i_reg <= sys_err_i_next;
+   sys_ack_i_reg <= sys_ack_i_next;
+	sys:rdata_i_reg <= sys_rdata_i_next;
+end if;
+end process;
 
-   casez (sys_addr[19:0])
-     20'h00000 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 4{1'b0}}, adc_we_keep               // do not disarm on 
-                                                                              , adc_dly_do                // trigger status
-                                                                              , 1'b0                      // reset
-                                                                              , adc_we}             ; end // arm
+	--next state logic
 
-     20'h00004 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 4{1'b0}}, set_trig_src}       ; end 
+process(sys_addr(19 downto 0))
+begin
+	case sys_addr(19 downto 0) is 
+     when x"00000" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= x"0000000" & adc_we_keep -- do not disarm on 
+                                                                              & adc_dly_do            -- trigger status
+                                                                              & '0'                   -- reset
+                                                                              & adc_we}             ; -- arm
 
-     20'h00008 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_tresh_reg}        ; end
-     20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh_reg}        ; end
-     20'h00010 : begin sys_ack <= sys_en;          sys_rdata <= { set_dly_reg}            ; end
-     20'h00014 : begin sys_ack <= sys_en;          sys_rdata <= {{32-17{1'b0}}, set_dec_reg}            ; end
+     when x"00004" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= {{32- 4{1'b0}}, set_trig_src}       ; end 
 
-     20'h00018 : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_cur}        ; end
-     20'h0001C : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_trig}       ; end
+     when x"00008" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_tresh_reg}        ; end
+     when x"0000C" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh_reg}        ; end
+     when x"00010" => sys_ack_i_nexk <= sys_en;          sys_rdata <= { set_dly_reg}            ; end
+     when x"00014" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-17{1'b0}}, set_dec_reg}            ; end
 
-     20'h00020 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_hyst_reg}         ; end
-     20'h00024 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_hyst_reg}         ; end
+     when x"00018" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_cur}        ; end
+     when x"0001C" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_trig}       ; end
 
-     20'h00028 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_avg_en}         ; end
+     when x"00020" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_hyst_reg}         ; end
+     when x"00024" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_hyst_reg}         ; end
 
-     20'h0002C : begin sys_ack <= sys_en;          sys_rdata <=                 adc_we_cnt          ; end
+     when x"00028" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_avg_en}         ; end
 
-     20'h00030 : begin sys_ack <= sys_en;          sys_rdata <= {{32-18{1'b0}}, set_a_filt_aa}      ; end
-     20'h00034 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_bb}      ; end
-     20'h00038 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_kk}      ; end
-     20'h0003C : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_pp}      ; end
-     20'h00040 : begin sys_ack <= sys_en;          sys_rdata <= {{32-18{1'b0}}, set_b_filt_aa}      ; end
-     20'h00044 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_bb}      ; end
-     20'h00048 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_kk}      ; end
-     20'h0004C : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_pp}      ; end
+     when x"0002C" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 adc_we_cnt          ; end
 
-     20'h00050 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_star     ; end
-     20'h00054 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_stop      ; end
-     20'h00058 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_dly       ; end
-     20'h0005C : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_a_axi_en}       ; end
-     20'h00060 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_trig      ; end
-     20'h00064 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_cur       ; end
+     when x"00030" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-18{1'b0}}, set_a_filt_aa}      ; end
+     when x"00034" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_bb}      ; end
+     when x"00038" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_kk}      ; end
+     when x"0003C" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_pp}      ; end
+     when x"00040" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-18{1'b0}}, set_b_filt_aa}      ; end
+     when x"00044" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_bb}      ; end
+     when x"00048" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_kk}      ; end
+     when x"0004C" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_pp}      ; end
 
-     20'h00070 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_start     ; end
-     20'h00074 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_stop      ; end
-     20'h00078 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_dly       ; end
-     20'h0007C : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_b_axi_en}       ; end
-     20'h00080 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_trig      ; end
-     20'h00084 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_cur       ; end
+     when x"00050" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_a_axi_star     ; end
+     when x"00054" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_a_axi_stop      ; end
+     when x"00058" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_a_axi_dly       ; end
+     when x"0005C" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_a_axi_en}       ; end
+     when x"00060" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_a_axi_trig      ; end
+     when x"00064" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_a_axi_cur       ; end
 
-     20'h00090 : begin sys_ack <= sys_en;          sys_rdata <= {{32-20{1'b0}}, set_deb_len_reg}        ; end
+     when x"00070" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_b_axi_start     ; end
+     when x"00074" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_b_axi_stop      ; end
+     when x"00078" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_b_axi_dly       ; end
+     when x"0007C" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_b_axi_en}       ; end
+     when x"00080" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_b_axi_trig      ; end
+     when x"00084" => sys_ack_i_nexk <= sys_en;          sys_rdata <=                 set_b_axi_cur       ; end
 
-     20'h1???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_a_rd}              ; end
-     20'h2???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_b_rd}              ; end
+     when x"00090" => sys_ack_i_nexk <= sys_en;          sys_rdata <= {{32-20{1'b0}}, set_deb_len_reg}        ; end
 
-       default : begin sys_ack <= sys_en;          sys_rdata <=  32'h0                              ; end
+     when x"1----" => sys_ack_i_nexk <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_a_rd}              ; end
+     when x"2----" => sys_ack_i_nexk <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_b_rd}              ; end
+
+     when  others  =>  sys_ack_i_next <= sys_en;          sys_rdata <=  32'h0                              ; end
    endcase
 end
 
