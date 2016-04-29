@@ -179,7 +179,7 @@ signal axi_a_we_reg,        axi_a_we_next         : std_logic ;
 signal axi_a_dat_reg,       axi_a_dat_next        : std_logic_vector(64-1 downto 0)  ;
 signal axi_a_dat_sel_reg,   axi_a_dat_sel_next    : unsigned(2-1 downto 0) ;
 signal axi_a_dat_dv_reg,    axi_a_dat_dv_next     : std_logic_vector(1-1 downto 0) ;
-signal axi_a_dly_cnt_reg    axi_a_dly_cnt_next    : unsigned(32-1 downto 0) ;
+signal axi_a_dly_cnt_reg,   axi_a_dly_cnt_next    : unsigned(32-1 downto 0) ;
 signal axi_a_dly_do_reg,    axi_a_dly_do_next     : std_logic       ;
 signal axi_a_clr                                  : std_logic          ;
 signal axi_a_cur_addr                             : std_logic_vector(32-1 downto 0)     ;
@@ -198,7 +198,7 @@ signal axi_b_we_reg,        axi_b_we_next         : std_logic ;
 signal axi_b_dat_reg,       axi_b_dat_next        : std_logic_vector(64-1 downto 0)  ;
 signal axi_b_dat_sel_reg,   axi_b_dat_sel_next    : std_logic_vector(2-1 downto 0) ;
 signal axi_b_dat_dv_reg,    axi_b_dat_dv_next     : std_logic_vector(1-1 downto 0) ;
-signal axi_b_dly_cnt_reg    axi_b_dly_cnt_next    : unsigned(32-1 downto 0) ;
+signal axi_b_dly_cnt_reg,    axi_b_dly_cnt_next    : unsigned(32-1 downto 0) ;
 signal axi_b_dly_do_reg,    axi_b_dly_do_next     : std_logic       ;
 signal axi_b_clr                                  : std_logic          ;
 signal axi_b_cur_addr                             : std_logic     ;
@@ -311,9 +311,9 @@ end process;
   --next state logic
   adc_dec_cnt_next  <=  to_unsigned(1, adc_dec_cnt_next'length) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1')) else -- start again or arm
                         adc_dec_cnt_reg + 1;
-  adc_a_sum_next    <=  signed(adc_a_filt_out) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1') else
+  adc_a_sum_next    <=  signed(adc_a_filt_out) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1')) else
                         adc_a_sum_reg + signed(adc_a_filt_out);
-  adc_b_sum_next    <=  signed(adc_b_filt_out) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1') else
+  adc_b_sum_next    <=  signed(adc_b_filt_out) when ((adc_dec_cnt_reg >= unsigned(set_dec_reg)) or (adc_arm_do_reg = '1')) else
                         adc_b_sum_reg + signed(adc_b_filt_out);
 
   adc_dv_next <=  '1' when (adc_dec_cnt_reg >= unsigned(set_dec_reg)) else
@@ -326,7 +326,7 @@ end process;
     adc_a_dat_next <= adc_a_filt_out                      when  std_logic_vector(to_unsigned(16#0#, set_dec_reg'length)), --17'h0
                       adc_a_sum_reg(15+0 downto 0)        when  std_logic_vector(to_unsigned(16#1#, set_dec_reg'length)), --17'h1     
                       adc_a_sum_reg(15+3 downto 3)        when  std_logic_vector(to_unsigned(16#8#, set_dec_reg'length)), --17'h8     
-                      edc_a_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(16#40#, set_dec_reg'length)),      
+                      adc_a_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(16#40#, set_dec_reg'length)),      
                       adc_a_sum_reg(15+10 downto 10)      when  std_logic_vector(to_unsigned(16#400#, set_dec_reg'length)),       
                       adc_a_sum_reg(15+13 downto 13)      when  std_logic_vector(to_unsigned(16#2000#, set_dec_reg'length)),     
                       adc_a_sum_reg(15+16 downto 16)      when  std_logic_vector(to_unsigned(16#10000#, set_dec_reg'length)),     
@@ -337,7 +337,7 @@ end process;
     adc_b_dat_next <= adc_b_filt_out                      when  std_logic_vector(to_unsigned(16#0#, set_dec_reg'length)), --17'h0
                       adc_b_sum_reg(15+0 downto 0)        when  std_logic_vector(to_unsigned(16#1#, set_dec_reg'length)), --17'h1     
                       adc_b_sum_reg(15+3 downto 3)        when  std_logic_vector(to_unsigned(16#8#, set_dec_reg'length)), --17'h8     
-                      edc_b_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(16#40#, set_dec_reg'length)),      
+                      adc_b_sum_reg(15+6 downto  6)       when  std_logic_vector(to_unsigned(16#40#, set_dec_reg'length)),      
                       adc_b_sum_reg(15+10 downto 10)      when  std_logic_vector(to_unsigned(16#400#, set_dec_reg'length)),       
                       adc_b_sum_reg(15+13 downto 13)      when  std_logic_vector(to_unsigned(16#2000#, set_dec_reg'length)),     
                       adc_b_sum_reg(15+16 downto 16)      when  std_logic_vector(to_unsigned(16#10000#, set_dec_reg'length)),     
