@@ -58,47 +58,46 @@ entity red_pitaya_scope is
 );
   port(
    -- ADC
-   adc_clk_i       : in std_logic                         , -- ADC clock
-   adc_rstn_i      : in std_logic                         , -- ADC reset - active low
-   adc_a_i         : in std_logic_vector(14-1 downto 0)   , -- ADC data CHA
-   adc_b_i         : in std_logic_vector(14-1 downto 0)   , -- ADC data CHB
+   adc_clk_i       : in std_logic                         ; -- ADC clock
+   adc_rstn_i      : in std_logic                         ; -- ADC reset - active low
+   adc_a_i         : in std_logic_vector(14-1 downto 0)   ; -- ADC data CHA
+   adc_b_i         : in std_logic_vector(14-1 downto 0)   ; -- ADC data CHB
    -- trigger sources
-   trig_ext_i      : in std_logic                         , -- external trigger
-   trig_asg_i      : in std_logic                         , -- ASG trigger
+   trig_ext_i      : in std_logic                         ; -- external trigger
+   trig_asg_i      : in std_logic                         ; -- ASG trigger
 
    -- AXI0 master
-   axi0_clk_o      : out std_logic                        , -- global clock
-   axi0_rstn_o     : out std_logic                        , -- global reset
-   axi0_waddr_o    : out std_logic_vector(32-1 downto 0)  , -- system write address
-   axi0_wdata_o    : out std_logic_vector(64-1 downto 0)  , -- system write data
-   axi0_wsel_o     : out std_logic_vector(8-1 downto 0)   , -- system write byte select
-   axi0_wvalid_o   : out std_logic                        , -- system write data valid
-   axi0_wlen_o     : out std_logic_vector(4-1 downto 0)   , -- system write burst length
-   axi0_wfixed_o   : out std_logic                        , -- system write burst type (fixed / incremental)
-   axi0_werr_i     : in std_logic                         , -- system write error
-   axi0_wrdy_i     : in std_logic                         , -- system write ready
+   axi0_clk_o      : out std_logic                        ; -- global clock
+   axi0_rstn_o     : out std_logic                        ; -- global reset
+   axi0_waddr_o    : out std_logic_vector(32-1 downto 0)  ; -- system write address
+   axi0_wdata_o    : out std_logic_vector(64-1 downto 0)  ; -- system write data
+   axi0_wsel_o     : out std_logic_vector(8-1 downto 0)   ; -- system write byte select
+   axi0_wvalid_o   : out std_logic                        ; -- system write data valid
+   axi0_wlen_o     : out std_logic_vector(4-1 downto 0)   ; -- system write burst length
+   axi0_wfixed_o   : out std_logic                        ; -- system write burst type (fixed / incremental)
+   axi0_werr_i     : in std_logic                         ; -- system write error
+   axi0_wrdy_i     : in std_logic                         ; -- system write ready
 
    -- AXI1 master
-   axi1_clk_o      : out std_logic                        , -- global clock 
-   axi1_rstn_o     : out std_logic                        , -- global reset
-   axi1_waddr_o    : out std_logic_vector(32-1 downto 0)  , -- system write address
-   axi1_wdata_o    : out std_logic_vector(64-1 downto 0)  , -- system write data
-   axi1_wsel_o     : out std_logic_vector(8-1 downto 0)   , -- system write byte select
-   axi1_wvalid_o   : out std_logic                        , -- system write data valid
-   axi1_wlen_o     : out std_logic_vector(4-1 downto 0)   , -- system write burst length
-   axi1_wfixed_o   : out std_logic                        , -- system write burst 
-   axi1_werr_i     : in std_logic                         , -- system write error 
-   axi1_wrdy_i     : in std_logic,  -- system write ready 
+   axi1_clk_o      : out std_logic                        ; -- global clock 
+   axi1_rstn_o     : out std_logic                        ; -- global reset
+   axi1_waddr_o    : out std_logic_vector(32-1 downto 0)  ; -- system write address
+   axi1_wdata_o    : out std_logic_vector(64-1 downto 0)  ; -- system write data
+   axi1_wsel_o     : out std_logic_vector(8-1 downto 0)   ; -- system write byte select
+   axi1_wvalid_o   : out std_logic                        ; -- system write data valid
+   axi1_wlen_o     : out std_logic_vector(4-1 downto 0)   ; -- system write burst length
+   axi1_wfixed_o   : out std_logic                        ; -- system write burst 
+   axi1_werr_i     : in std_logic                         ; -- system write error 
+   axi1_wrdy_i     : in std_logic			  ;  -- system write ready ;
   
    -- System bus
-   sys_addr      : in std_logic_vector(32-1 downto 0)     , -- bus saddress
-   sys_wdata     : in std_logic_vector(32-1 downto 0)     , -- bus write data
-   sys_sel       : in std_logic_vector(4-1 downto 0)      , -- bus write byte select
-   sys_wen       : in std_logic                           , -- bus write enable
-   sys_ren       : in std_logic                           , -- bus read enable
-    --TODO: verificar estos ultimas seniales, que son definidas como reg
-   sys_rdata     : out std_logic_vector(32-1 downto 0)    , -- bus read data
-   sys_err       : out std_logic                          , -- bus error indicator
+   sys_addr      : in std_logic_vector(32-1 downto 0)     ; -- bus saddress
+   sys_wdata     : in std_logic_vector(32-1 downto 0)     ; -- bus write data
+   sys_sel       : in std_logic_vector(4-1 downto 0)      ; -- bus write byte select
+   sys_wen       : in std_logic                           ; -- bus write enable
+   sys_ren       : in std_logic                           ; -- bus read enable
+   sys_rdata     : out std_logic_vector(32-1 downto 0)    ; -- bus read data
+   sys_err       : out std_logic                          ; -- bus error indicator
    sys_ack       : out std_logic                            -- bus acknowledge signal
 );
 end red_pitaya_scope;
@@ -297,15 +296,15 @@ if (adc_rstn_i = '0') then
   adc_b_sum_reg   <= (others => '0');
   adc_dec_cnt_reg <= (others => '0') ;
   adc_dv_reg      <=  '0' ;
-  adc_a_dat_reg   <= (others => '0'); --todo:hopo
-  adc_b_dat_reg   <= (others => '0'); --todo:hopo
+  adc_a_dat_reg   <= (others => '0'); 
+  adc_b_dat_reg   <= (others => '0'); 
 elsif (rising_edge(adc_clk_i)) then
   adc_a_sum_reg   <=  adc_a_sum_next;
   adc_b_sum_reg   <=  adc_b_sum_next;
   adc_dec_cnt_reg <=  adc_dec_cnt_next;
   adc_dv_reg      <=  adc_dv_next;
-  adc_a_dat_reg   <=  adc_a_dat_next; --todo:hopo
-  adc_b_dat_reg   <=  adc_b_dat_next; --todo:hopo
+  adc_a_dat_reg   <=  adc_a_dat_next; 
+  adc_b_dat_reg   <=  adc_b_dat_next;
 end if;
 end process;
 
@@ -480,7 +479,7 @@ end process;
                         axi_a_dly_do_reg;
 
   axi_a_dly_cnt_next <= axi_a_dly_cnt_reg - 1 when ((axi_a_dly_do_reg = '1') and ((axi_a_we_reg = '1') and (adc_dv_reg = '1'))) else
-                        set_a_axi_dly_reg     when (not axi_a_dly_do = '1') else
+                        unsigned(set_a_axi_dly_reg)     when (not axi_a_dly_do = '1') else
                         axi_a_dly_cnt_reg; -- mantain value
 
   axi_a_dat_sel_next <= (others => '0')       when (axi_a_clr = '1') else
@@ -579,7 +578,7 @@ end process;
                        	axi_b_dly_do_reg;
 
   axi_b_dly_cnt_next <= axi_b_dly_cnt_reg - 1 when ((axi_b_dly_do_reg = '1') and ((axi_b_we_reg = '1') and (adc_dv_reg = '1'))) else
-                       	set_b_axi_dly_reg     when (not axi_b_dly_do = '1') else
+                       	unsigned(set_b_axi_dly_reg)     when (not axi_b_dly_do = '1') else
                        	axi_b_dly_cnt_reg; -- mantain value
 
   axi_b_dat_sel_next <= (others => '0')       when (axi_b_clr = '1') else
