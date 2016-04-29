@@ -101,6 +101,7 @@ entity red_pitaya_scope is
    sys_err       : out std_logic                          , -- bus error indicator
    sys_ack       : out std_logic                            -- bus acknowledge signal
 );
+end red_pitaya_scope;
 
 architecture rtl of red_pitaya_scope is
 
@@ -267,10 +268,10 @@ port map(
   adc_dat_i   => adc_a_filt_in,   -- ADC data
   adc_dat_o   => adc_a_filt_out,  -- ADC data
   -- configuration
-  cfg_aa_i    => set_a_filt_aa,   -- config AA coefficient
-  cfg_bb_i    => set_a_filt_bb,   -- config BB coefficient
-  cfg_kk_i    => set_a_filt_kk,   -- config KK coefficient
-  cfg_pp_i    => set_a_filt_pp    -- config PP coefficient
+  cfg_aa_i    => set_a_filt_aa_reg,   -- config AA coefficient
+  cfg_bb_i    => set_a_filt_bb_reg,   -- config BB coefficient
+  cfg_kk_i    => set_a_filt_kk_reg,   -- config KK coefficient
+  cfg_pp_i    => set_a_filt_pp_reg    -- config PP coefficient
 );
 
 i_dfilt1_chb: entity work.red_pitaya_dfilt1
@@ -281,10 +282,10 @@ port map(
   adc_dat_i   => adc_b_filt_in   ,  -- ADC data
   adc_dat_o   => adc_b_filt_out  ,  -- ADC data
   -- configuration
-  cfg_aa_i    => set_b_filt_aa   ,  -- config AA coefficient
-  cfg_bb_i    => set_b_filt_bb   ,  -- config BB coefficient
-  cfg_kk_i    => set_b_filt_kk   ,  -- config KK coefficient
-  cfg_pp_i    => set_b_filt_pp      -- config PP coefficient
+  cfg_aa_i    => set_b_filt_aa_reg   ,  -- config AA coefficient
+  cfg_bb_i    => set_b_filt_bb_reg   ,  -- config BB coefficient
+  cfg_kk_i    => set_b_filt_kk_reg   ,  -- config KK coefficient
+  cfg_pp_i    => set_b_filt_pp_reg      -- config PP coefficient
 );
 
 -----------------------------------------------------------------------------------
