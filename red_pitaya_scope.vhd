@@ -67,12 +67,12 @@ entity red_pitaya_scope is
    trig_asg_i      : in std_logic                         ; -- ASG trigger
 
    -- AXI0 master
-   axi0_clk_o      : out std_logic                        ; -- global clock
-   axi0_rstn_o     : out std_logic                        ; -- global reset
+   axi0_clk_o      : inout std_logic                        ; -- global clock
+   axi0_rstn_o     : inout std_logic                        ; -- global reset
    axi0_waddr_o    : out std_logic_vector(32-1 downto 0)  ; -- system write address
    axi0_wdata_o    : out std_logic_vector(64-1 downto 0)  ; -- system write data
    axi0_wsel_o     : out std_logic_vector(8-1 downto 0)   ; -- system write byte select
-   axi0_wvalid_o   : out std_logic                        ; -- system write data valid
+   axi0_wvalid_o   : inout std_logic                        ; -- system write data valid
    axi0_wlen_o     : out std_logic_vector(4-1 downto 0)   ; -- system write burst length
    axi0_wfixed_o   : out std_logic                        ; -- system write burst type (fixed / incremental)
    axi0_werr_i     : in std_logic                         ; -- system write error
@@ -84,7 +84,7 @@ entity red_pitaya_scope is
    axi1_waddr_o    : out std_logic_vector(32-1 downto 0)  ; -- system write address
    axi1_wdata_o    : out std_logic_vector(64-1 downto 0)  ; -- system write data
    axi1_wsel_o     : out std_logic_vector(8-1 downto 0)   ; -- system write byte select
-   axi1_wvalid_o   : out std_logic                        ; -- system write data valid
+   axi1_wvalid_o   : inout std_logic                        ; -- system write data valid
    axi1_wlen_o     : out std_logic_vector(4-1 downto 0)   ; -- system write burst length
    axi1_wfixed_o   : out std_logic                        ; -- system write burst 
    axi1_werr_i     : in std_logic                         ; -- system write error 
@@ -412,7 +412,7 @@ end process;
 -- Read
 process(adc_clk_i, adc_rstn_i)
 begin
-if (rising_edge(adc_clk_i) then
+if (rising_edge(adc_clk_i)) then
   if (adc_rstn_i = '0') then
     adc_rval_reg <= (others => '0') ;
   else
@@ -424,11 +424,11 @@ end process;
   --next state logic
   adc_rval_next <= adc_rval_reg(2 downto 0) & (sys_ren or sys_wen);
 
-  adc_rd_dv = adc_rval_reg(3);
+  adc_rd_dv <= adc_rval_reg(3);
 
 process(adc_clk_i)
 begin
-  if (rising_edge(adc_clk_i) then
+  if (rising_edge(adc_clk_i)) then
    adc_raddr_reg   <= adc_raddr_next;  
    adc_a_raddr_reg <= adc_a_raddr_next;
    adc_b_raddr_reg <= adc_b_raddr_next;
@@ -450,17 +450,17 @@ end process;
 
 axi_a_clr <= adc_rst_do_reg ;
 
-process(axi0_clk_o, axi0_clk_o)
+process(axi0_clk_o, axi0_rstn_o)
 begin
  if (axi0_rstn_o = '0') then
     axi_a_we_reg      <= '0' ;
     axi_a_dat_reg     <= (others => '0');
     axi_a_dat_sel_reg <=  (others => '0');
-    axi_a_dat_dv_reg  <= '0' ;
+    axi_a_dat_dv_reg  <= (others => '0') ;
     axi_a_dly_cnt_reg <= (others => '0') ;
     axi_a_dly_do_reg  <= '0' ;
-    set_a_axi_cur_reg <= (other => '0');
- elsif (rising_edge(axi0_clk_o) then
+    set_a_axi_cur_reg <= (others => '0');
+ elsif (rising_edge(axi0_clk_o)) then
     axi_a_we_reg      <= axi_a_we_next;      
     axi_a_dat_reg     <= axi_a_dat_next;     
     axi_a_dat_sel_reg <= axi_a_dat_sel_next; 
@@ -473,38 +473,35 @@ end process;
 
   --next state logic
   axi_a_we_next <=  '1' when ((adc_arm_do_reg = '1') and (set_a_axi_en_reg = '1')) else
-                    '0' when ((axi_a_dly_do_reg = '1') or (adc_trig_reg = '1') and 
-                              (axi_a_dly_cnt_reg = 0) or (adc_rst_do_reg = '1')) else --delayed reached or reset
+                    '0' when ((((axi_a_dly_do_reg = '1') or (adc_trig_reg = '1')) and (axi_a_dly_cnt_reg = 0)) or (adc_rst_do_reg = '1')) else --delayed reached or reset
                     axi_a_we_reg; -- mantain value
 
   axi_a_dly_do_next  <= '1' when ((adc_trig_reg = '1') and (axi_a_we_reg = '1')) else
-                        '0' when ((axi_a_dly_do_reg = '1') and (axi_a_dly_cnt_reg = 0) or 
-                                  ((axi_a_clr = '1') or (adc_arm_do_reg = '1'))) else --delayed reached or reset
+                        '0' when (((axi_a_dly_do_reg = '1') and (axi_a_dly_cnt_reg = 0)) or (axi_a_clr = '1') or (adc_arm_do_reg = '1')) else --delayed reached or reset
                         axi_a_dly_do_reg;
 
-  axi_a_dly_cnt_next <= axi_a_dly_cnt_reg - 1 when ((axi_a_dly_do_reg = '1') and ((axi_a_we_reg = '1') and (adc_dv_reg = '1'))) else
-                        unsigned(set_a_axi_dly_reg)     when (not axi_a_dly_do = '1') else
+  axi_a_dly_cnt_next <= axi_a_dly_cnt_reg - 1        when ((axi_a_dly_do_reg = '1') and (axi_a_we_reg = '1') and (adc_dv_reg = '1')) else
+                        unsigned(set_a_axi_dly_reg)  when (not axi_a_dly_do_reg = '1') else
                         axi_a_dly_cnt_reg; -- mantain value
 
   axi_a_dat_sel_next <= (others => '0')       when (axi_a_clr = '1') else
                         axi_a_dat_sel_reg + 1 when ((axi_a_we_reg = '1') and (adc_dv_reg = '1')) else
                         axi_a_dat_sel_reg; -- mantain value
 
-  axi_a_dat_dv_next <=  '1' when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
-                        '0';
+  axi_a_dat_dv_next <=  (others => '1') when ((axi_a_we_reg = '1') and (axi_a_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
+                        (others => '0');
 
-  axi_a_dat_next(16-1 downto 0) <=  signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "00")) else axi_a_dat_reg(16-1 downto 0); --mantain value 
-  axi_a_dat_next(32-1 downto 16) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "01")) else axi_a_dat_reg(32-1 downto 16); --mantain value  
-  axi_a_dat_next(48-1 downto 32) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "10")) else axi_a_dat_reg(48-1 downto 32); --mantain value  
-  axi_a_dat_next(64-1 downto 48) <= signed(adc_a_dat_reg) when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel = "11")) else axi_a_dat_reg(64-1 downto 48); --mantain value  
+  axi_a_dat_next(16-1 downto 0) <=  adc_a_dat_reg when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel_reg = "00")) else axi_a_dat_reg(16-1 downto 0); --mantain value 
+  axi_a_dat_next(32-1 downto 16) <= adc_a_dat_reg when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel_reg = "01")) else axi_a_dat_reg(32-1 downto 16); --mantain value  
+  axi_a_dat_next(48-1 downto 32) <= adc_a_dat_reg when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel_reg = "10")) else axi_a_dat_reg(48-1 downto 32); --mantain value  
+  axi_a_dat_next(64-1 downto 48) <= adc_a_dat_reg when ((axi_a_we_reg = '1') and (adc_dv_reg = '1') and (axi_a_dat_sel_reg = "11")) else axi_a_dat_reg(64-1 downto 48); --mantain value  
 
   set_a_axi_trig_next <=  (others => '0')                                       when (axi_a_clr = '1') else
-                          (axi_a_cur_addr(32-1 downto 3) & axi_a_dat_sel & '0') when ((adc_trig_reg = '1') and 
-                                                                                      (not axi_a_dly_do = '1') and (axi_a_we_reg = '1')) else -- save write pointer at trigger arrival
+                          (31-3 => axi_a_cur_addr(32-1 downto 3), 2-1 => std_logic_vector(axi_a_dat_sel_reg), 0 => '0') when ((adc_trig_reg = '1') and (not axi_a_dly_do_reg = '1') and (axi_a_we_reg = '1')) else -- save write pointer at trigger arrival
                           set_a_axi_trig_reg; --mantain value
 
-  set_a_axi_cur_next <= set_a_axi_start_reg when (axi_a_clr = '1') else
-                        axi_a_cur_addr  when (axi0_wvalid_o = '1') else
+  set_a_axi_cur_next <= set_a_axi_start_reg when (axi_a_clr = '1')     else
+                        axi_a_cur_addr      when (axi0_wvalid_o = '1') else
                         set_a_axi_cur_reg; --mantain value
 
 i_wr0: entity work.axi_wr_fifo 
@@ -532,9 +529,9 @@ port map(
   wr_data_i          =>  axi_a_dat_reg         , -- write data
   wr_val_i           =>  axi_a_dat_dv_reg      , -- write data valid
   ctrl_start_addr_i  =>  set_a_axi_start_reg   , -- range start address
-  ctrl_stop_addr_i   =>  set_a_axi_stop    , -- range stop address
-  ctrl_trig_size_i   =>  x"F"              , -- trigger level
-  ctrl_wrap_i        =>  '1' 	             , -- start from begining when reached stop
+  ctrl_stop_addr_i   =>  set_a_axi_stop_reg    , -- range stop address
+  ctrl_trig_size_i   =>  (others => '1')       , -- trigger level
+  ctrl_wrap_i        =>  "1" 	             , -- start from begining when reached stop
   ctrl_clr_i         =>  axi_a_clr         , -- clear / flush
   stat_overflow_o    =>  open                  , -- overflow indicator
   stat_cur_addr_o    =>  axi_a_cur_addr    , -- current write address
@@ -551,15 +548,15 @@ port map(
 axi_b_clr = adc_rst_do_reg ;
 process(axi1_clk_o, axi1_rstn_o)
 begin
- if (axi0_rstn_o = '0') then
+ if (axi1_rstn_o = '0') then
     axi_b_we_reg      <= '0' ;
     axi_b_dat_reg     <= (others => '0');
     axi_b_dat_sel_reg <=  (others => '0');
-    axi_b_dat_dv_reg  <= '0' ;
+    axi_b_dat_dv_reg  <= (others => '0') ;
     axi_b_dly_cnt_reg <= (others => '0') ;
     axi_b_dly_do_reg  <= '0' ;
-    set_b_axi_cur_reg <= (other => '0');
- elsif (rising_edge(axi0_clk_o) then
+    set_b_axi_cur_reg <= (others => '0');
+ elsif (rising_edge(axi1_clk_o)) then
     axi_b_we_reg      <= axi_b_we_next;      
     axi_b_dat_reg     <= axi_b_dat_next;     
     axi_b_dat_sel_reg <= axi_b_dat_sel_next; 
@@ -589,8 +586,8 @@ end process;
                         axi_b_dat_sel_reg + 1 when ((axi_b_we_reg = '1') and (adc_dv_reg = '1')) else
                         axi_b_dat_sel_reg; -- mantain value
 
-  axi_b_dat_dv_next <=  '1' when ((axi_b_we_reg = '1') and (axi_b_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
-                        '0';
+  axi_b_dat_dv_next <=  (others => '1') when ((axi_b_we_reg = '1') and (axi_b_dat_sel_reg = 3) and (adc_dv_reg = '1')) else 
+                        (others => '0');
 
   axi_b_dat_next(16-1 downto 0) <=  signed(adc_b_dat) when ((axi_b_we_reg = '1') and (adc_dv_reg = '1') and (axi_b_dat_sel = "00")) else
                                     axi_b_dat_reg(16-1 downto 0); --mantain value 
@@ -633,33 +630,33 @@ port map(
   axi_wrdy_i         =>  axi1_wrdy_i       , -- write ready
 
   -- data and configuration
-  wr_data_i          =>  axi_b_dat         , -- write data
-  wr_val_i           =>  axi_b_dat_dv      , -- write data valid
-  ctrl_start_addr_i  =>  set_b_axi_start   , -- range start address
-  ctrl_stop_addr_i   =>  set_b_axi_stop    , -- range stop address
-  ctrl_trig_size_i   =>  x"F"              , -- trigger level
-  ctrl_wrap_i        =>  '1'              , -- start from begining when reached stop
+  wr_data_i          =>  axi_b_dat_reg         , -- write data
+  wr_val_i           =>  axi_b_dat_dv_reg      , -- write data valid
+  ctrl_start_addr_i  =>  set_b_axi_start_reg   , -- range start address
+  ctrl_stop_addr_i   =>  set_b_axi_stop_reg    , -- range stop address
+  ctrl_trig_size_i   =>  (others => '1')       , -- trigger level
+  ctrl_wrap_i        =>  "1"              , -- start from begining when reached stop
   ctrl_clr_i         =>  axi_b_clr         , -- clear / flush
   stat_overflow_o    =>  open              , -- overflow indicator
   stat_cur_addr_o    =>  axi_b_cur_addr    , -- current write address
   stat_write_data_o  =>  open                -- write data indicator
 );
 
-	axi1_clk_o  <= adc_clk_i ;
-	axi1_rstn_o <= adc_rstn_i;
+axi1_clk_o  <= adc_clk_i ;
+axi1_rstn_o <= adc_rstn_i;
 
 -----------------------------------------------------------------------------------
 --  Trigger source selector
 
 process(adc_clk_i, adc_rstn_i)
 begin
-  if (adc_rstn_i == '0') begin
+  if (adc_rstn_i = '0') then
     adc_arm_do_reg    <= '0' ;
     adc_rst_do_reg    <= '0' ;
     adc_trig_sw_reg   <= '0' ;
     set_trig_src_reg  <= (others => '0');
     adc_trig_reg      <= '0' ;
-  end else begin
+  elsif (rising_edge(adc_clk_i)) then
     adc_arm_do_reg    <=  adc_arm_do_next;
     adc_rst_do_reg    <=  adc_rst_do_next;
     adc_trig_sw_reg   <=  adc_trig_sw_next;  
@@ -708,11 +705,11 @@ if (adc_rstn_i = '0') then
   adc_trig_an_reg  <=  '0' ;
   adc_trig_bp_reg  <=  '0' ;
   adc_trig_bn_reg  <=  '0' ;
-	set_a_treshp_reg	<=
- 	set_a_treshm_reg	<=
- 	set_b_treshp_reg	<=
- 	set_b_treshm_reg	<=
-elsif (rising_edge(adc_clk_i) then
+  set_a_treshp_reg <=  (others => '0') ;
+  set_a_treshm_reg <=  (others => '0') ;
+  set_b_treshp_reg <=  (others => '0') ;
+  set_b_treshm_reg <=  (others => '0') ;
+elsif (rising_edge(adc_clk_i)) then
   adc_scht_ap_reg  <= adc_scht_ap_next; 
   adc_scht_an_reg  <= adc_scht_an_next; 
   adc_scht_bp_reg  <= adc_scht_bp_next; 
@@ -721,10 +718,10 @@ elsif (rising_edge(adc_clk_i) then
   adc_trig_an_reg  <= adc_trig_an_next; 
   adc_trig_bp_reg  <= adc_trig_bp_next; 
   adc_trig_bn_reg  <= adc_trig_bn_next; 
-	set_a_treshp_reg	<= set_a_treshp_next;
- 	set_a_treshm_reg	<= set_a_treshm_next;
- 	set_b_treshp_reg	<= set_b_treshp_next;
- 	set_b_treshm_reg	<= set_b_treshm_next;
+  set_a_treshp_reg <= set_a_treshp_next;
+  set_a_treshm_reg <= set_a_treshm_next;
+  set_b_treshp_reg <= set_b_treshp_next;
+  set_b_treshm_reg <= set_b_treshm_next;
 end if;
 end process;
 
