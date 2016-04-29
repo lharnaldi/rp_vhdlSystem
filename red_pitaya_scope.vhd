@@ -147,7 +147,7 @@ signal adc_b_buf                                  : ram_type;
 
 signal adc_a_rd_reg, adc_a_rd_next                : std_logic_vector(14-1 downto 0)      ;
 signal adc_b_rd_reg, adc_b_rd_next                : std_logic_vector(14-1 downto 0)      ;
-signal adc_wp_reg, adc_wp_next                    : std_logic_vector(RSZ-1 downto 0)        ;
+signal adc_wp_reg, adc_wp_next                    : unsigned(RSZ-1 downto 0)        ;
 signal adc_raddr_reg, adc_raddr_next              : std_logic_vector(RSZ-1 downto 0)    ;
 signal adc_a_raddr_reg, adc_a_raddr_next          : std_logic_vector(RSZ-1 downto 0)   ;
 signal adc_b_raddr_reg, adc_b_raddr_next          : std_logic_vector(RSZ-1 downto 0)   ;
@@ -162,7 +162,7 @@ signal adc_wp_cur_reg, adc_wp_cur_next            : std_logic_vector(RSZ-1 downt
 signal set_dly_reg, set_dly_next                  : std_logic_vector(32-1 downto 0)       ;
 signal adc_we_cnt_reg, adc_we_cnt_next            : unsigned(32-1 downto 0)    ;
 signal adc_dly_cnt_reg, adc_dly_cnt_next          : unsigned(32-1 downto 0)   ;
-signal adc_dly_do_reg, set_dly_do_next            : std_logic    ;
+signal adc_dly_do_reg, adc_dly_do_next            : std_logic    ;
 signal set_deb_len_reg, set_deb_len_next          : std_logic_vector(20-1 downto 0)   ; -- debouncing length (glitch free time after a posedge)
 
 -----------------------------------------------------------------------------------
@@ -375,7 +375,7 @@ end process;
   
   -- count how much data was written into the buffer before trigger
   adc_we_cnt_next <=  (others => '0') when ((adc_rst_do_reg = '1') or (adc_arm_do_reg = '1')) else 
-                      adc_we_cnt_reg + 1 when ((adc_we_reg = '1') and ( not adc_dly_do_reg = '1') and (adc_dv_reg = '1') and (adc_we_cnt_reg /= (others => '1') else 
+                      adc_we_cnt_reg + 1 when ((adc_we_reg = '1') and ( not adc_dly_do_reg = '1') and (adc_dv_reg = '1') and (adc_we_cnt_reg /= (others => '1'))) else 
                       adc_we_cnt_reg; -- mantain value
   
   adc_wp_next <= (others => '0') when (adc_rst_do_reg = '1') else
@@ -403,8 +403,8 @@ process(adc_clk_i)
 begin
 if (rising_edge(adc_clk_i)) then
    if ((adc_we_reg = '1') and (adc_dv_reg = '1')) then
-      adc_a_buf(to_integer(unsigned(adc_wp_reg))) <= adc_a_dat_reg ;
-      adc_b_buf(to_integer(unsigned(adc_wp_reg))) <= adc_b_dat_reg ;
+      adc_a_buf(to_integer(adc_wp_reg)) <= adc_a_dat_reg ;
+      adc_b_buf(to_integer(adc_wp_reg)) <= adc_b_dat_reg ;
    end
 end process;
 
