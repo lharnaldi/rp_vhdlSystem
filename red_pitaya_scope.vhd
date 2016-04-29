@@ -157,8 +157,8 @@ signal adc_we_reg, adc_we_next                    : std_logic        ;
 signal adc_we_keep_reg, adc_we_keep_next          : std_logic   ;
 signal adc_trig_reg, adc_trig_next                : std_logic      ;
 
-signal adc_wp_trig_reg, adc_wp_trig_next          : std_logic_vector(RSZ-1 downto 0)   ;
-signal adc_wp_cur_reg, adc_wp_cur_next            : std_logic_vector(RSZ-1 downto 0)    ;
+signal adc_wp_trig_reg, adc_wp_trig_next          : unsigned(RSZ-1 downto 0)   ;
+signal adc_wp_cur_reg, adc_wp_cur_next            : unsigned(RSZ-1 downto 0)    ;
 signal set_dly_reg, set_dly_next                  : std_logic_vector(32-1 downto 0)       ;
 signal adc_we_cnt_reg, adc_we_cnt_next            : unsigned(32-1 downto 0)    ;
 signal adc_dly_cnt_reg, adc_dly_cnt_next          : unsigned(32-1 downto 0)   ;
@@ -350,7 +350,7 @@ end process;
 process(adc_clk_i, adc_rstn_i)
 begin
 if (adc_rstn_i = '0') then
-  adc_wp_reg      <= others => '0';
+  adc_wp_reg      <= (others => '0');
   adc_we_reg      <=  '0'    ;
   adc_wp_trig_reg <= (others => '0');
   adc_wp_cur_reg  <= (others => '0');
@@ -395,7 +395,7 @@ end process;
                       adc_dly_do_reg;
   
   adc_dly_cnt_next <= adc_dly_cnt_reg - 1 when ((adc_dly_do_reg = '1') and (adc_we_reg = '1') and (adc_dv_reg = '1')) else
-                      set_dly_reg when (not adc_dly_do_reg = '1') else
+                      unsigned(set_dly_reg) when (not adc_dly_do_reg = '1') else
                       adc_dly_cnt_reg; -- mantain value
 
 --todo: check that part
@@ -405,17 +405,20 @@ if (rising_edge(adc_clk_i)) then
    if ((adc_we_reg = '1') and (adc_dv_reg = '1')) then
       adc_a_buf(to_integer(adc_wp_reg)) <= adc_a_dat_reg ;
       adc_b_buf(to_integer(adc_wp_reg)) <= adc_b_dat_reg ;
-   end
+   end if;
+end if;
 end process;
 
 -- Read
 process(adc_clk_i, adc_rstn_i)
 begin
 if (rising_edge(adc_clk_i) then
-  if (adc_rstn_i = '0')
+  if (adc_rstn_i = '0') then
     adc_rval_reg <= (others => '0') ;
   else
     adc_rval_reg <= adc_rval_next;
+  end if;
+end if;
 end process;
 
   --next state logic
@@ -431,7 +434,8 @@ begin
    adc_b_raddr_reg <= adc_b_raddr_next;
    adc_a_rd_reg    <= adc_a_rd_next;
    adc_b_rd_reg    <= adc_b_rd_next;
-end
+  end if;
+end process;
 
 -- next state logic
   adc_raddr_next   <= sys_addr(RSZ+1 downto 2)                          ; -- address synchronous to clock
@@ -948,7 +952,7 @@ begin
      when x"00010" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= set_dly_reg            ; 
      when x"00014" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= (others => '0', 16-0 => set_dec_reg)        ; 
 
-     when x"00018" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= (others => '0', (RSZ-1)-0 => adc_wp_cur)        ; 
+     when x"00018" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= (others => '0', (RSZ-1)-0 => std_logic_vector(adc_wp_cur))        ; 
      when x"0001C" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= (others => '0', (RSZ-1)-0 => adc_wp_trig)       ; 
 
      when x"00020" => sys_ack_i_next <= sys_en;          sys_rdata_i_next <= (others => '0', 13-0 => set_a_hyst_reg)     ; 
