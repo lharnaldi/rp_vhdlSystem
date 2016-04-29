@@ -198,7 +198,7 @@ signal axi_b_we_reg,        axi_b_we_next         : std_logic ;
 signal axi_b_dat_reg,       axi_b_dat_next        : std_logic_vector(64-1 downto 0)  ;
 signal axi_b_dat_sel_reg,   axi_b_dat_sel_next    : std_logic_vector(2-1 downto 0) ;
 signal axi_b_dat_dv_reg,    axi_b_dat_dv_next     : std_logic_vector(1-1 downto 0) ;
-signal axi_b_dly_cnt_reg    axi_b_dly_cnt_next    : std_logic_vector(32-1 downto 0) ;
+signal axi_b_dly_cnt_reg    axi_b_dly_cnt_next    : unsigned(32-1 downto 0) ;
 signal axi_b_dly_do_reg,    axi_b_dly_do_next     : std_logic       ;
 signal axi_b_clr                                  : std_logic          ;
 signal axi_b_cur_addr                             : std_logic     ;
@@ -236,21 +236,22 @@ signal set_b_hyst_reg,   set_b_hyst_next        : std_logic_vector(14-1 downto 0
 -----------------------------------------------------------------------------------
 --  External trigger
 
-signal ext_trig_in_reg,  ext_trig_in_next       : std_logic_vector(3-1 downto 0 )   ;
-signal ext_trig_dp_reg,  ext_trig_dp_next       : std_logic_vector(2-1 downto 0 )   ;
-signal ext_trig_dn_reg,  ext_trig_dn_next       : std_logic_vector(2-1 downto 0 )   ;
+signal ext_trig_in_reg,  ext_trig_in_next       : std_logic_vector(3-1 downto 0 ) ;
+signal ext_trig_dp_reg,  ext_trig_dp_next       : std_logic_vector(2-1 downto 0 ) ;
+signal ext_trig_dn_reg,  ext_trig_dn_next       : std_logic_vector(2-1 downto 0 ) ;
 signal ext_trig_debp_reg, ext_trig_debp_next    : std_logic_vector(20-1 downto 0) ;
 signal ext_trig_debn_reg, ext_trig_debn_next    : std_logic_vector(20-1 downto 0) ;
-signal asg_trig_in_reg,  asg_trig_in_next       : std_logic_vector(3-1 downto 0 )   ;
-signal asg_trig_dp_reg,  asg_trig_dp_next       : std_logic_vector(2-1 downto 0 )   ;
-signal asg_trig_dn_reg,  asg_trig_dn_next       : std_logic_vector(2-1 downto 0 )   ;
+signal asg_trig_in_reg,  asg_trig_in_next       : std_logic_vector(3-1 downto 0 ) ;
+signal asg_trig_dp_reg,  asg_trig_dp_next       : std_logic_vector(2-1 downto 0 ) ;
+signal asg_trig_dn_reg,  asg_trig_dn_next       : std_logic_vector(2-1 downto 0 ) ;
 signal asg_trig_debp_reg, asg_trig_debp_next    : std_logic_vector(20-1 downto 0) ;
 signal asg_trig_debn_reg, asg_trig_debn_next    : std_logic_vector(20-1 downto 0) ;
                                                            
 signal sys_en                                   : std_logic                       ;
-signal sys_rdata_i_reg, sys_rdata_i_next				: std_logic_vector(32-1 downto 0); 
+signal sys_rdata_i_reg, sys_rdata_i_next	: std_logic_vector(32-1 downto 0) ; 
 signal sys_err_i_reg, sys_err_i_next            : std_logic                       ;
 signal sys_ack_i_reg, sys_ack_i_next            : std_logic                       ;
+
 begin                                                     
 
 -----------------------------------------------------------------------------------
