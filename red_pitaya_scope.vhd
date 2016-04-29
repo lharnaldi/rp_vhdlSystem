@@ -297,15 +297,15 @@ if (adc_rstn_i = '0') then
   adc_b_sum_reg   <= (others => '0');
   adc_dec_cnt_reg <= (others => '0') ;
   adc_dv_reg      <=  '0' ;
-  adc_dat_a_reg   <= (others => '0') --todo:hopo
-  adc_dat_b_reg   <= (others => '0') --todo:hopo
+  adc_a_dat_reg   <= (others => '0'); --todo:hopo
+  adc_b_dat_reg   <= (others => '0'); --todo:hopo
 elsif (rising_edge(adc_clk_i)) then
   adc_a_sum_reg   <=  adc_a_sum_next;
   adc_b_sum_reg   <=  adc_b_sum_next;
   adc_dec_cnt_reg <=  adc_dec_cnt_next;
   adc_dv_reg      <=  adc_dv_next;
-  adc_dat_a_reg   <=  adc_dat_a_next; --todo:hopo
-  adc_dat_b_reg   <=  adc_dat_b_next; --todo:hopo
+  adc_a_dat_reg   <=  adc_a_dat_next; --todo:hopo
+  adc_b_dat_reg   <=  adc_b_dat_next; --todo:hopo
 end if;
 end process;
 
