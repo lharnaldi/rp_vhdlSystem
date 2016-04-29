@@ -54,7 +54,7 @@ use ieee.numeric_std.all;
 
 entity red_pitaya_scope is
   generic(
-  RSZ : natural = 14  -- RAM size 2**RSZ
+  RSZ : natural := 14  -- RAM size 2**RSZ
 );
   port(
    -- ADC
