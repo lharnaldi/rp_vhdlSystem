@@ -1,51 +1,51 @@
-/**
- * $Id: red_pitaya_scope.vhd 965 2016-04-24 10:41:52Z lharnaldi $
- *
- * @brief Red Pitaya oscilloscope application, used for capturing ADC data
- *        into BRAMs, which can be later read by SW.
- *
- * @Author L. Horacio Arnaldi
- *
- * (c) Red Pitaya  http://www.redpitaya.com
- *
- * This part of code is written in VHDL hardware description language (HDL).
- * Please visit http://en.wikipedia.org/wiki/VHDL
- * for more details on the language used herein.
- */
-
-/**
- * GENERAL DESCRIPTION:
- *
- * This is simple data aquisition module, primerly used for scilloscope 
- * application. It consists from three main parts.
- *
- *
- *                /--------\      /-----------\            /-----\
- *   ADC CHA ---> | DFILT1 | ---> | AVG & DEC | ---------> | BUF | --->  SW
- *                \--------/      \-----------/     |      \-----/
- *                                                  ˇ         ^
- *                                              /------\      |
- *   ext trigger -----------------------------> | TRIG | -----+
- *                                              \------/      |
- *                                                  ^         ˇ
- *                /--------\      /-----------\     |      /-----\
- *   ADC CHB ---> | DFILT1 | ---> | AVG & DEC | ---------> | BUF | --->  SW
- *                \--------/      \-----------/            \-----/ 
- *
- *
- * Input data is optionaly averaged and decimated via average filter.
- *
- * Trigger section makes triggers from input ADC data or external digital 
- * signal. To make trigger from analog signal schmitt trigger is used, external
- * trigger goes first over debouncer, which is separate for pos. and neg. edge.
- *
- * Data capture buffer is realized with BRAM. Writing into ram is done with 
- * arm/trig logic. With adc_arm_do signal (SW) writing is enabled, this is active
- * until trigger arrives and adc_dly_cnt counts to zero. Value adc_wp_trig
- * serves as pointer which shows when trigger arrived. This is used to show
- * pre-trigger data.
- * 
- */
+--
+--$Id: red_pitaya_scope.vhd 965 2016-04-24 10:41:52Z lharnaldi $
+--
+--@brief Red Pitaya oscilloscope application, used for capturing ADC data
+--       into BRAMs, which can be later read by SW.
+--
+--@Author L. Horacio Arnaldi
+--
+--(c) Red Pitaya  http://www.redpitaya.com
+--
+--This part of code is written in VHDL hardware description language (HDL).
+--Please visit http://en.wikipedia.org/wiki/VHDL
+--for more details on the language used herein.
+--
+--
+--
+--GENERAL DESCRIPTION:
+--
+--This is simple data aquisition module, primerly used for scilloscope 
+--application. It consists from three main parts.
+--
+--
+--               /--------\      /-----------\            /-----\
+--  ADC CHA ---> | DFILT1 | ---> | AVG & DEC | ---------> | BUF | --->  SW
+--               \--------/      \-----------/     |      \-----/
+--                                                 ˇ         ^
+--                                             /------\      |
+--  ext trigger -----------------------------> | TRIG | -----+
+--                                             \------/      |
+--                                                 ^         ˇ
+--               /--------\      /-----------\     |      /-----\
+--  ADC CHB ---> | DFILT1 | ---> | AVG & DEC | ---------> | BUF | --->  SW
+--               \--------/      \-----------/            \-----/ 
+--
+--
+--Input data is optionaly averaged and decimated via average filter.
+--
+--Trigger section makes triggers from input ADC data or external digital 
+--signal. To make trigger from analog signal schmitt trigger is used, external
+--trigger goes first over debouncer, which is separate for pos. and neg. edge.
+--
+--Data capture buffer is realized with BRAM. Writing into ram is done with 
+--arm/trig logic. With adc_arm_do signal (SW) writing is enabled, this is active
+--until trigger arrives and adc_dly_cnt counts to zero. Value adc_wp_trig
+--serves as pointer which shows when trigger arrived. This is used to show
+--pre-trigger data.
+--
+--
 
 library ieee;
 
